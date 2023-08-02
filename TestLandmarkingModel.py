@@ -1,5 +1,5 @@
-from ChebyModel.DataSetGraph import ReadPolyData, WritePolyData
-from LandmarkingUtils import RunInference
+from tools.DataSetGraph import ReadPolyData, WritePolyData
+from tools.LandmarkingUtils import RunInference
 from Analyze3DPhotogram import ValidVTP
 import argparse
 from os import path
