@@ -5,7 +5,7 @@ import argparse
 from tools.LandmarkingUtils import RunInference
 from tools.PhotoAnalysisTools import AlignPatientToTemplate, GenerateSphericalMapOfData, ComputeFromSphericalImage
 
-def PlaceLandmarks(data_filename, crop=True, verbose = True, crop_percentage = crop_percentage):
+def PlaceLandmarks(data_filename, crop=True, verbose = True, crop_percentage = 0.4):
     '''
     Inputs:
         data_filename: String pointing to the 3D photogram
@@ -17,7 +17,7 @@ def PlaceLandmarks(data_filename, crop=True, verbose = True, crop_percentage = c
         print('Placing craniofacial landmarks...')
     image = ReadPolyData(data_filename)
     #run the inference
-    landmarks = RunInference(image, crop=crop, percentage = crop_percentage)
+    landmarks = RunInference(image, crop=crop, crop_percentage = crop_percentage)
     return landmarks, image
 
 def ComputeHSAandRiskScore(image, landmarks, age, sex, verbose = True):
@@ -73,7 +73,7 @@ if __name__ == "__main__":
     #parse the arguments, python automatically takes the system args
     args = ParseArguments()
     #first, let's start with the landmarks
-    landmarks, image = PlaceLandmarks(args.input_filename, crop=args.crop_image, verbose=args.verbose, percentage = args.crop_percentage)
+    landmarks, image = PlaceLandmarks(args.input_filename, crop=args.crop_image, verbose=args.verbose, crop_percentage = args.crop_percentage)
     #now the metrics!
     riskScore, HSA_index = ComputeHSAandRiskScore(image, landmarks, args.age, args.sex, verbose=args.verbose)
     print(f'Results calculated from the image: {args.input_filename}\n\tCraniosynostosis Risk Score: {riskScore:0.2f}%\n\tHead Shape Anomaly Index: {HSA_index:0.2f}')
