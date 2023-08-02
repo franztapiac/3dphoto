@@ -23,6 +23,6 @@ if __name__ == "__main__":
     #VTK reader
     image = ReadPolyData(args.input_filename)
     #run the inference
-    landmarks, cropped_image = RunInference(image, crop = args.crop_data, return_cropped_image=True)
+    landmarks, cropped_image = RunInference(image, crop = args.crop_image, return_cropped_image=True)
     WritePolyData(landmarks,path.join(path.dirname(args.input_filename),'testlandmarks.vtp'))
     WritePolyData(cropped_image,path.join(path.dirname(args.input_filename),'testcropped_image.vtp'))
