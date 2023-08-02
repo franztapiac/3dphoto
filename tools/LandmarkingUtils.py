@@ -1,6 +1,6 @@
 import torch
 import SimpleITK as sitk
-from vtk.util import numpy_support
+from vtkmodules.util import numpy_support
 import numpy as np
 import pdb
 import tools.DataSetGraph as DataSet
