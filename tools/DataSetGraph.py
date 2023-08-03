@@ -3,7 +3,7 @@ import pdb
 import numpy as np
 import SimpleITK as sitk
 from pathlib import Path
-from vtk.util.numpy_support import vtk_to_numpy
+from vtkmodules.util.numpy_support import vtk_to_numpy
 from torch_geometric.data import Dataset
 from torch_geometric.data import Data
 import torch
