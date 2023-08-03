@@ -12,11 +12,11 @@ def ConvertToVTP(data, landmarks):
     data.y = landmarks.squeeze()
     # landmarks = landmarks.squeeze() * data.norm_values
     data = DataSet.unnormalize_data(data)
-    landmarks = data.y 
+    landmarks = data.y
     out_landmarks = vtk.vtkPolyData()
     out_landmarks.SetPoints(vtk.vtkPoints())
     for p in range(len(landmarks)):
-        out_landmarks.GetPoints().InsertNextPoint(landmarks[p, 0 ], landmarks[p, 1], landmarks[p, 2])
+        out_landmarks.GetPoints().InsertNextPoint(landmarks[p, 0 ], landmarks[p, 1], landmarks[p, 2])  # x,y,z likely
     return out_landmarks 
 
 def InterpolateTextureToPoints(mesh, new_mesh):
@@ -86,8 +86,8 @@ def DownsampleMesh(mesh, target_reduction = 0.1, use_texture = True):
 
 def ConvertSurfaceToGraph(surface, target_points = 20000):
     initial_points = surface.GetNumberOfPoints()
-    downsampled_surface = DownsampleMesh(surface, target_reduction = target_points/initial_points)
-    graphdata = DataSet.convert_to_graph(downsampled_surface, None)
+    downsampled_surface = DownsampleMesh(surface, target_reduction = target_points/initial_points)  # uses Texture
+    graphdata = DataSet.convert_to_graph(downsampled_surface, None)  # uses Texture
     return graphdata
 
 def AddArraysToLandmarks(landmarks, landmark_names = None):
@@ -349,8 +349,8 @@ def RunInference(surface, crop = True, return_cropped_image = False, crop_percen
     else:
         cropped_surface = surface
 
-    graph = ConvertSurfaceToGraph(cropped_surface)
-    landmarks, heat_map = PlacePatientLandmarksGraph(graph)
+    graph = ConvertSurfaceToGraph(cropped_surface)  # uses texture
+    landmarks, heat_map = PlacePatientLandmarksGraph(graph)  # output of model is landmarks and heat_map
     landmarks_vtp = ConvertToVTP(graph, landmarks)
     landmarks_vtp = FitLandmarksOnMesh(landmarks_vtp, heat_map, surface, graph)
     landmarks_vtp = AddArraysToLandmarks(landmarks_vtp)
@@ -358,3 +358,9 @@ def RunInference(surface, crop = True, return_cropped_image = False, crop_percen
         return landmarks_vtp, cropped_surface
     else:
         return landmarks_vtp
+
+
+if __name__ == '__main__':
+    mesh_path = 'C:\\Users\\franz\\Documents\\work\\projects\\arp\\quantification-methods\\hsa\\3dphoto\\franz-hsa\\sagittal_inst_001_cp_paraview.vtp'
+
+    pass
