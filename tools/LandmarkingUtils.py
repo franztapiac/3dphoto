@@ -36,18 +36,17 @@ def InterpolateTextureToPoints(mesh, new_mesh):
     for point in range(new_mesh.GetNumberOfPoints()):
         try:
             textureArray.InsertNextTuple3(*mesh.GetPointData().GetArray('Texture').GetTuple(locator.FindClosestPoint(*new_mesh.GetPoint(point))))
-            # new_mesh.GetPoint() -> (-56.822017669677734, 30.91840171813965, -55.818843841552734)
+            # new_mesh.GetPoint(0) -> (-56.822017669677734, 30.91840171813965, -55.818843841552734)
             # [*new_mesh.GetPoint(0)] -> [-56.822017669677734, 30.91840171813965, -55.818843841552734]
-            # print(*new_mesh.GetPoint()) -> -56.822017669677734 30.91840171813965 -55.818843841552734
+            # print(*new_mesh.GetPoint(0)) -> -56.822017669677734 30.91840171813965 -55.818843841552734
             # locator.FindClosestPoint(*new_mesh.GetPoint(0)) -> 0
             # locator.FindClosestPoint(*new_mesh.GetPoint(7430)) -> 2813
 
             # mesh.GetPointData() -> <vtkmodules.vtkCommonDataModel.vtkPointData(0x00000213E59C9B20) at 0x00000213E73C6160>
             # mesh.GetPointData().GetArray('Texture') -> None
-
-
-
-
+            # mesh.GetPointData().GetArray() -> TypeError: no overloads of GetArray() take 0 arguments
+            # mesh.GetPointData().GetArray(0 or 1) -> vtkTypeFloat32Array or vtkTypeUInt8Array
+            # mesh.GetPointData().GetAbstractArray(0 or 1) -> vtkTypeFloat32Array or vtkTypeUInt8Array
 
         except:
             pdb.set_trace()
