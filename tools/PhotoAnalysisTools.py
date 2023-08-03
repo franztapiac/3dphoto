@@ -3,7 +3,7 @@ import pandas as pd
 from tools.LandmarkingUtils import CutMeshWithCranialBaseLandmarks, vtkPolyDataToNumpy
 import tools.DataSetGraph as DataSet
 import vtk
-from vtk.util import numpy_support
+from vtkmodules.util import numpy_support
 import SimpleITK as sitk
 import os
 import numpy as np
@@ -722,3 +722,8 @@ def ComputeFromSphericalImage(coordsImage, age, sex, remove_scale = True):
     df['Sex'] = sex
 
     return ComputeResults(df, model)
+
+if __name__ == '__main__':
+    templateLandmarks_forRegisitration = DataSet.ReadPolyData(EURYON_CRANIALBASE_LANDMARKS_PATH)
+    template_space_landmarks = DataSet.ReadPolyData(GLABELLA_CRANIALBASE_LANDMARKS_PATH)
+    print('f')
