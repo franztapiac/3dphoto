@@ -1,10 +1,12 @@
+import numpy as np
+
 from tools.DataSetGraph import ReadPolyData, WritePolyData
 import pdb
 from os import path
+import vtk
 import argparse
-from tools.LandmarkingUtils import RunInference
+from tools.LandmarkingUtils import RunInference, AddArraysToLandmarks
 from tools.PhotoAnalysisTools import AlignPatientToTemplate, GenerateSphericalMapOfData, ComputeFromSphericalImage
-
 def PlaceLandmarks(data_filename, crop=True, verbose = True, crop_percentage = 0.4):
     '''
     Inputs:
@@ -65,17 +67,40 @@ def ConstructArguments():
                         help = 'Percentage of the image to crop out. Adjust this parameter between 0-1 to control cropping amount.')
     return parser
 
+
 def ParseArguments():
     parser = ConstructArguments()
     return parser.parse_args()
 
+
+def custom_landmarks_object():
+    landmark_coords = [[1.36976, 1.29766, 43.735],      # Nasion
+                       [-54.8302, 0.423142, -21.3009],  # Tragion right
+                       [53.0547, -5.48717, -21.5361]]   # Tragion left
+    landmark_coords = np.asarray(landmark_coords)
+    # coordinates from sagittal_inst_001_cp_paraview.vtp
+
+    out_landmarks = vtk.vtkPolyData()
+    out_landmarks.SetPoints(vtk.vtkPoints())
+    for p in range(len(landmark_coords)):
+        out_landmarks.GetPoints().InsertNextPoint(landmark_coords[p, 0], landmark_coords[p, 1], landmark_coords[p, 2])
+
+    landmark_names = ["NASION", "TRAGION_RIGHT", "TRAGION_LEFT"]
+    landmarks_vtp = AddArraysToLandmarks(out_landmarks, landmark_names)
+
+    return landmarks_vtp
+
+
 if __name__ == "__main__":
-    #parse the arguments, python automatically takes the system args
+    # Parse the arguments, python automatically takes the system args
     args = ParseArguments()
 
-    #first, let's start with the landmarks
-    landmarks, image = PlaceLandmarks(args.input_filename, crop=args.crop_image, verbose=args.verbose, crop_percentage = args.crop_percentage)
+    # First, let's start with the landmarks
+    # landmarks, image = PlaceLandmarks(args.input_filename, crop=args.crop_image, verbose=args.verbose, crop_percentage = args.crop_percentage)
 
-    #now the metrics!
+    landmarks = custom_landmarks_object()
+    image = ReadPolyData(args.input_filename)
+
+    # Now the metrics!
     riskScore, HSA_index = ComputeHSAandRiskScore(image, landmarks, args.age, args.sex, verbose=args.verbose)
     print(f'Results calculated from the image: {args.input_filename}\n\tCraniosynostosis Risk Score: {riskScore:0.2f}%\n\tHead Shape Anomaly Index: {HSA_index:0.2f}')
