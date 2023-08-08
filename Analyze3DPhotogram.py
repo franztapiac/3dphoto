@@ -6,6 +6,7 @@ from tools.LandmarkingUtils import RunInference, AddArraysToLandmarks
 from tools.PhotoAnalysisTools import AlignPatientToTemplate, GenerateSphericalMapOfData, ComputeFromSphericalImage
 import numpy as np
 import vtk
+from pathlib import Path
 
 def ReadImage(imagefilename):
     if imagefilename.endswith('.obj'):
@@ -71,7 +72,7 @@ def ConstructArguments():
     parser.add_argument('--verbose', action='store_true', help='Print out information during the processing steps.' )
 
     parser.add_argument('--crop_image',action='store_true', help = 'Option to crop the data to ensure the shoulders are not included in the photogram.')
-    parser.add_argument('--crop_percentage',action = 'store',default=0.4, type = float,
+    parser.add_argument('--crop_percentage',action = 'store',default=0, type = float,
                         help = 'Percentage of the image to crop out. Adjust this parameter between 0-1 to control cropping amount.')
     return parser
 
@@ -104,7 +105,13 @@ if __name__ == "__main__":
     args = ParseArguments()
     #first, let's start with the landmarks
     image = ReadImage(args.input_filename)
-    landmarks, _ = PlaceLandmarks(image, crop=args.crop_image, verbose=args.verbose, crop_percentage = args.crop_percentage)
+    landmarks, _ = PlaceLandmarks(image, crop=args.crop_image, verbose=args.verbose, crop_percentage=args.crop_percentage)
+    print(args.crop_percentage)
+    # Export landmarks for quality control
+    file_path = Path(args.input_filename)
+    landmarks_file_path = file_path.parent / '79_landmarks.vtp'
+    WritePolyData(landmarks, str(landmarks_file_path.absolute()))
+
     #now the metrics!
     riskScore, HSA_index = ComputeHSAandRiskScore(image, landmarks, args.age, args.sex, verbose=args.verbose)
     print(f'Results calculated from the image: {args.input_filename}\n\tCraniosynostosis Risk Score: {riskScore:0.2f}%\n\tHead Shape Anomaly Index: {HSA_index:0.2f}')
