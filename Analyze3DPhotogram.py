@@ -1,13 +1,22 @@
-import numpy as np
-
-from tools.DataSetGraph import ReadPolyData, WritePolyData
+from tools.DataSetGraph import ReadPolyData, WritePolyData, LoadOBJFile
 import pdb
 from os import path
-import vtk
 import argparse
 from tools.LandmarkingUtils import RunInference, AddArraysToLandmarks
 from tools.PhotoAnalysisTools import AlignPatientToTemplate, GenerateSphericalMapOfData, ComputeFromSphericalImage
-def PlaceLandmarks(data_filename, crop=True, verbose = True, crop_percentage = 0.4):
+import numpy as np
+import vtk
+
+def ReadImage(imagefilename):
+    if imagefilename.endswith('.obj'):
+        image = LoadOBJFile(imagefilename)
+    else:
+        image = ReadPolyData(imagefilename)
+    return image
+
+
+def PlaceLandmarks(image, crop=True, verbose = True, crop_percentage = 0.4):
+
     '''
     Inputs:
         data_filename: String pointing to the 3D photogram
@@ -17,7 +26,6 @@ def PlaceLandmarks(data_filename, crop=True, verbose = True, crop_percentage = 0
     #VTK xml reader
     if verbose:
         print('Placing craniofacial landmarks...')
-    image = ReadPolyData(data_filename)
     #run the inference
     landmarks = RunInference(image, crop=crop, crop_percentage = crop_percentage)
     return landmarks, image
@@ -44,8 +52,8 @@ def ComputeHSAandRiskScore(image, landmarks, age, sex, verbose = True):
 
 def ValidVTP(param):
     _, ext = path.splitext(param)
-    if (ext.lower() not in ('.vtp')) or not (path.isfile(param)):
-        raise argparse.ArgumentTypeError('File must be a valid VTK PolyData file (.vtp)')
+    if (ext.lower() not in ('.vtp','.obj','.vtk')) or not (path.isfile(param)):
+        raise argparse.ArgumentTypeError('File must be a valid VTK PolyData file (.vtp) or OBJ file (.obj)')
     return param
 
 def ConstructArguments():
@@ -92,15 +100,11 @@ def custom_landmarks_object():
 
 
 if __name__ == "__main__":
-    # Parse the arguments, python automatically takes the system args
+    #parse the arguments, python automatically takes the system args
     args = ParseArguments()
-
-    # First, let's start with the landmarks
-    # landmarks, image = PlaceLandmarks(args.input_filename, crop=args.crop_image, verbose=args.verbose, crop_percentage = args.crop_percentage)
-
-    landmarks = custom_landmarks_object()
-    image = ReadPolyData(args.input_filename)
-
-    # Now the metrics!
+    #first, let's start with the landmarks
+    image = ReadImage(args.input_filename)
+    landmarks, _ = PlaceLandmarks(image, crop=args.crop_image, verbose=args.verbose, crop_percentage = args.crop_percentage)
+    #now the metrics!
     riskScore, HSA_index = ComputeHSAandRiskScore(image, landmarks, args.age, args.sex, verbose=args.verbose)
     print(f'Results calculated from the image: {args.input_filename}\n\tCraniosynostosis Risk Score: {riskScore:0.2f}%\n\tHead Shape Anomaly Index: {HSA_index:0.2f}')
