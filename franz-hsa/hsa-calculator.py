@@ -3,6 +3,7 @@ from tools.DataSetGraph import WritePolyData, ReadPolyData
 from vtkmodules.vtkIOPLY import vtkPLYReader
 from Analyze3DPhotogram import PlaceLandmarks, ComputeHSAandRiskScore
 import re
+import pandas as pd
 
 vtp_data_path = Path(
     'C:/Users/franz/Documents/work/projects/arp/quantification-methods/hsa/3dphoto/franz-hsa/synth_data/vtp')
@@ -26,8 +27,45 @@ def convert_ply_files_to_vtp():
             WritePolyData(ply_file, str(vtp_file_path))
 
 
+def load_hsa_scores(file_path):
+
+    probability_data = pd.read_excel(file_path, header=None)
+
+    header = probability_data.iloc[0]
+    subtypes_df = header[header.notna()]
+    subtypes = subtypes_df.values.tolist()
+    subtypes_cols = subtypes_df.index.tolist()
+
+    hsa_scores = dict()
+
+    for i, subtype in enumerate(subtypes):
+        hsa_scores[subtype] = dict()
+        mesh_ids = probability_data.iloc[2:, subtypes_cols[i]]
+        mesh_ids = mesh_ids[mesh_ids.notna()].tolist()
+        subtype_data = probability_data.iloc[2:, subtypes_cols[i]+1]
+        subtype_data = subtype_data[subtype_data.notna()].tolist()
+        subtype_data = [float(item) for item in subtype_data]
+        for j, mesh_id in enumerate(mesh_ids):
+            hsa_scores[subtype][mesh_id] = subtype_data[j]
+    return hsa_scores
+
+
+def export_to_excel(data_dict, output_path):
+
+    with pd.ExcelWriter(str(output_path.absolute())) as writer:
+        for i, subtype in enumerate(list(data_dict.keys())):
+
+            # Generating the dataframe from the dictionary
+            size = len(data_dict.keys())
+            df = pd.DataFrame.from_dict(data_dict[subtype], orient='index', columns=['HSA index'])
+            df.to_excel(writer, sheet_name='Sheet1', startcol=i*(size+2), startrow=1, index=True)
+
+
+
+
+
 subtypes = ['control', 'sagittal', 'metopic']
-HSA_indeces = {subtype: {mesh_id: None for mesh_id in range(101)} for subtype in subtypes}
+HSA_indeces = {subtype: {mesh_id: None for mesh_id in range(1, 101)} for subtype in subtypes}
 
 for subtype_folder in vtp_data_path.iterdir():
     for mesh_vtp_file_path in subtype_folder.glob('*_cp.vtp'):
@@ -38,12 +76,18 @@ for subtype_folder in vtp_data_path.iterdir():
         match = re.match(pattern, mesh_vtp_file_path.stem)
         mesh_subtype = match.group(1)
         mesh_id_num = int(match.group(2))
+        HSA_indeces_storage_path = Path('../franz-hsa/hsa_try.xlsx')
+        HSA_indeces_storage_path2 = Path('../franz-hsa/hsa_scores.xlsx')
+        hsa_df = load_hsa_scores(HSA_indeces_storage_path)
+        export_to_excel(hsa_df, output_path=HSA_indeces_storage_path2)
 
         landmarks, _ = PlaceLandmarks(mesh, crop=False, verbose=False, crop_percentage=0)
 
         _, HSA_index = ComputeHSAandRiskScore(mesh, landmarks, 100, 'M', verbose=False)
 
         HSA_indeces[mesh_subtype][mesh_id_num] = HSA_index
+
+
 
 
 # for subtype in HSA_indeces.keys():
