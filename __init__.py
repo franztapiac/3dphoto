@@ -1,5 +1,5 @@
 import os
-DATA_DIR = './data/'
+DATA_DIR = '../data/'
 MODEL_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), './NormativePCAModel/')
 CLASSIFIER_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), './CraniosynostosisClassifier/')
 

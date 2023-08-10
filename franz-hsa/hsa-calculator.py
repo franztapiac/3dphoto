@@ -2,6 +2,7 @@ from pathlib import Path
 from tools.DataSetGraph import WritePolyData, ReadPolyData
 from vtkmodules.vtkIOPLY import vtkPLYReader
 from Analyze3DPhotogram import PlaceLandmarks, ComputeHSAandRiskScore
+import re
 
 vtp_data_path = Path(
     'C:/Users/franz/Documents/work/projects/arp/quantification-methods/hsa/3dphoto/franz-hsa/synth_data/vtp')
@@ -28,23 +29,21 @@ def convert_ply_files_to_vtp():
 subtypes = ['control', 'sagittal', 'metopic']
 HSA_indeces = {subtype: {mesh_id: None for mesh_id in range(101)} for subtype in subtypes}
 
-for subtype_folder in ply_data_path.iterdir():
+for subtype_folder in vtp_data_path.iterdir():
     for mesh_vtp_file_path in subtype_folder.glob('*_cp.vtp'):
-        mesh = ReadPolyData(mesh_vtp_file_path)
+        mesh = ReadPolyData(str(mesh_vtp_file_path))
 
-        landmarks, _ = PlaceLandmarks(mesh, crop=False, verbose=True, crop_percentage=0)
+        # Define the regular expression pattern
+        pattern = r'^(.*?)_inst_(\d{3})_cp$'
+        match = re.match(pattern, mesh_vtp_file_path.stem)
+        mesh_subtype = match.group(1)
+        mesh_id_num = int(match.group(2))
 
-        _, HSA_index = ComputeHSAandRiskScore(mesh, landmarks, 100, 'M', verbose=True)
+        landmarks, _ = PlaceLandmarks(mesh, crop=False, verbose=False, crop_percentage=0)
 
+        _, HSA_index = ComputeHSAandRiskScore(mesh, landmarks, 100, 'M', verbose=False)
 
-
-        # reader = PLYReader(FileName=str(mesh_ply_file_path))
-        # writer = XMLPolyDataWriter(reader, FileName=str(vtp_file_path))
-        # writer.UpdatePipeline()
-        # load ply file
-        # convert ply file to vtp
-        # export vtp
-
+        HSA_indeces[mesh_subtype][mesh_id_num] = HSA_index
 
 
 # for subtype in HSA_indeces.keys():
