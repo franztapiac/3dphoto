@@ -54,7 +54,7 @@ def export_to_excel(data_dict, output_path):
 
     with pd.ExcelWriter(str(output_path.absolute())) as writer:
         for i, subtype in enumerate(list(data_dict.keys())):
-
+            print(f'Exporting {subtype}...')
             # Generating the dataframe from the dictionary
             size = len(data_dict.keys())
             df = pd.DataFrame.from_dict(data_dict[subtype], orient='index', columns=['HSA index'])
@@ -63,7 +63,7 @@ def export_to_excel(data_dict, output_path):
 
 
 
-
+HSA_scores_path = Path('../franz-hsa/hsa_scores.xlsx')
 subtypes = ['control', 'sagittal', 'metopic']
 HSA_indeces = {subtype: {mesh_id: None for mesh_id in range(1, 101)} for subtype in subtypes}
 
@@ -76,16 +76,15 @@ for subtype_folder in vtp_data_path.iterdir():
         match = re.match(pattern, mesh_vtp_file_path.stem)
         mesh_subtype = match.group(1)
         mesh_id_num = int(match.group(2))
-        HSA_indeces_storage_path = Path('../franz-hsa/hsa_try.xlsx')
-        HSA_indeces_storage_path2 = Path('../franz-hsa/hsa_scores.xlsx')
-        hsa_df = load_hsa_scores(HSA_indeces_storage_path)
-        export_to_excel(hsa_df, output_path=HSA_indeces_storage_path2)
+        print(f'Working on {mesh_subtype} case #{mesh_id_num}...')
 
         landmarks, _ = PlaceLandmarks(mesh, crop=False, verbose=False, crop_percentage=0)
 
         _, HSA_index = ComputeHSAandRiskScore(mesh, landmarks, 100, 'M', verbose=False)
 
         HSA_indeces[mesh_subtype][mesh_id_num] = HSA_index
+
+export_to_excel(HSA_indeces, output_path=HSA_scores_path)
 
 
 
