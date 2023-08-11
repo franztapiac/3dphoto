@@ -4,11 +4,13 @@ from vtkmodules.vtkIOPLY import vtkPLYReader
 from Analyze3DPhotogram import PlaceLandmarks, ComputeHSAandRiskScore
 import re
 import pandas as pd
+import os
 
 vtp_data_path = Path(
     'C:/Users/franz/Documents/work/projects/arp/quantification-methods/hsa/3dphoto/franz-hsa/synth_data/vtp')
 ply_data_path = Path(
     'C:/Users/franz/Documents/work/projects/arp/quantification-methods/hsa/3dphoto/franz-hsa/synth_data/ply')
+
 
 def ReadPlyfile(ply_file_path):
     reader = vtkPLYReader()
@@ -61,41 +63,38 @@ def export_to_excel(data_dict, output_path):
             df.to_excel(writer, sheet_name='Sheet1', startcol=i*(size+2), startrow=1, index=True)
 
 
+def calculate_hsa_scores():
+    subtypes = ['control', 'sagittal', 'metopic']
+    HSA_indeces = {subtype: {mesh_id: None for mesh_id in range(1, 101)} for subtype in subtypes}
+
+    for subtype_folder in vtp_data_path.iterdir():
+        for mesh_vtp_file_path in subtype_folder.glob('*_cp.vtp'):
+            mesh = ReadPolyData(str(mesh_vtp_file_path))
+
+            # Define the regular expression pattern
+            pattern = r'^(.*?)_inst_(\d{3})_cp$'
+            match = re.match(pattern, mesh_vtp_file_path.stem)
+            mesh_subtype = match.group(1)
+            mesh_id_num = int(match.group(2))
+            print(f'Working on {mesh_subtype} case #{mesh_id_num}...')
+
+            landmarks, _ = PlaceLandmarks(mesh, crop=False, verbose=True, crop_percentage=0)
+
+            _, HSA_index = ComputeHSAandRiskScore(mesh, landmarks, 100, 'M', verbose=False)
+
+            HSA_indeces[mesh_subtype][mesh_id_num] = HSA_index
+
+    return HSA_indeces
 
 
-HSA_scores_path = Path('../franz-hsa/hsa_scores.xlsx')
-subtypes = ['control', 'sagittal', 'metopic']
-HSA_indeces = {subtype: {mesh_id: None for mesh_id in range(1, 101)} for subtype in subtypes}
-
-for subtype_folder in vtp_data_path.iterdir():
-    for mesh_vtp_file_path in subtype_folder.glob('*_cp.vtp'):
-        mesh = ReadPolyData(str(mesh_vtp_file_path))
-
-        # Define the regular expression pattern
-        pattern = r'^(.*?)_inst_(\d{3})_cp$'
-        match = re.match(pattern, mesh_vtp_file_path.stem)
-        mesh_subtype = match.group(1)
-        mesh_id_num = int(match.group(2))
-        print(f'Working on {mesh_subtype} case #{mesh_id_num}...')
-
-        landmarks, _ = PlaceLandmarks(mesh, crop=False, verbose=True, crop_percentage=0)
-
-        _, HSA_index = ComputeHSAandRiskScore(mesh, landmarks, 100, 'M', verbose=False)
-
-        HSA_indeces[mesh_subtype][mesh_id_num] = HSA_index
-
-export_to_excel(HSA_indeces, output_path=HSA_scores_path)
+def predict_and_plot(hsa_scores_path):
+    if os.path.exists(hsa_scores_path):
+        hsa_scores = load_hsa_scores(hsa_scores_path)
+    else:
+        hsa_scores = calculate_hsa_scores(hsa_scores_path)
+        export_to_excel(hsa_scores, output_path=HSA_scores_path)
 
 
-
-
-# for subtype in HSA_indeces.keys():
-#     mesh_ids_nums = list(HSA_indeces[subtype].keys())
-#     for mesh_id in mesh_ids_nums:
-#         # load vtp
-#         # calculate HSA
-#         # store HSA in HSA indeces
-#         pass
-
-# Export HSA indices to excel
-# Load HSA indeces to excel
+if __name__ == '__main__':
+    HSA_scores_path = Path('../franz-hsa/hsa_scores.xlsx')
+    predict_and_plot(HSA_scores_path)
