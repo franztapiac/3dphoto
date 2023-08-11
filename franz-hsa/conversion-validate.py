@@ -31,6 +31,6 @@ def test_conversion(device):
 
 
 if __name__ == '__main__':
-    curr_device = 'cpu'
+    curr_device = 'cluster'
     test_conversion(curr_device)
 
