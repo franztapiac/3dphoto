@@ -1,3 +1,5 @@
+import sys
+sys.path.append('../')
 from pathlib import Path
 from Analyze3DPhotogram import PlaceLandmarks, ComputeHSAandRiskScore, ReadImage
 
