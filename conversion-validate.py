@@ -1,12 +1,10 @@
-import sys
-sys.path.append('../')
 from pathlib import Path
 from Analyze3DPhotogram import PlaceLandmarks, ComputeHSAandRiskScore, ReadImage
 
 
 def get_data_dir(device):
     if device == 'cpu':
-        return Path('./conversion-validation')
+        return Path('./franz-hsa/conversion-validation')
     elif device == 'cluster':
         return Path('/data/scratch/r092382/conversion-validation')
 
@@ -31,6 +29,6 @@ def test_conversion(device):
 
 
 if __name__ == '__main__':
-    curr_device = 'cluster'
+    curr_device = 'cpu'
     test_conversion(curr_device)
 
