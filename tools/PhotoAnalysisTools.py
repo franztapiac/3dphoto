@@ -8,6 +8,7 @@ import SimpleITK as sitk
 import os
 import numpy as np
 import shelve
+from pathlib import Path
 
 ### Closes PolyData mesh with holes
 def closeMesh (mesh):
@@ -707,6 +708,8 @@ def ComputeResults(data, pca_model, num_comps = 35):
 
 def ComputeFromSphericalImage(coordsImage, age, sex, remove_scale = True):
     atlasPath = os.path.join(MODEL_DIR, 'PCAModel')
+    print(str(atlasPath))
+    print(str(Path(atlasPath).absolute()))
     with shelve.open(atlasPath, 'r') as atlasInformation:
         indices = atlasInformation['indices']
         model = atlasInformation['model']
