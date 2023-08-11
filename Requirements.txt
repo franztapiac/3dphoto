@@ -6,3 +6,5 @@ torchio
 SimpleITK
 vtk
 pandas
+xlrd
+openpyxl
