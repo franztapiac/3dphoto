@@ -78,7 +78,7 @@ for subtype_folder in vtp_data_path.iterdir():
         mesh_id_num = int(match.group(2))
         print(f'Working on {mesh_subtype} case #{mesh_id_num}...')
 
-        landmarks, _ = PlaceLandmarks(mesh, crop=False, verbose=False, crop_percentage=0)
+        landmarks, _ = PlaceLandmarks(mesh, crop=False, verbose=True, crop_percentage=0)
 
         _, HSA_index = ComputeHSAandRiskScore(mesh, landmarks, 100, 'M', verbose=False)
 
