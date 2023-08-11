@@ -1,8 +1,8 @@
 import os
 DATA_DIR = '../data/'
-MODEL_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../NormativePCAModel/')
+MODEL_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), '/NormativePCAModel/')
 print(str(MODEL_DIR))
-CLASSIFIER_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../CraniosynostosisClassifier/')
+CLASSIFIER_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), '/CraniosynostosisClassifier/')
 print(str(CLASSIFIER_DIR))
 
 CRANIOFACIAL_LANDMARKING_MODEL_PATH = os.path.join(DATA_DIR, 'CraniofacialLandmarkingModel.dat')
