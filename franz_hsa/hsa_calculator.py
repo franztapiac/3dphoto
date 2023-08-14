@@ -69,7 +69,7 @@ def calculate_hsa_scores(vtp_data_path):
             # Place landmarks on mesh, compute its hsa index, and store
             tic = time.process_time()
             landmarks, _ = PlaceLandmarks(mesh, crop=False, verbose=True, crop_percentage=0)
-            _, hsa_index = ComputeHSAandRiskScore(mesh, landmarks, 100, 'M', verbose=False)
+            _, hsa_index = ComputeHSAandRiskScore(mesh, landmarks, 200, 'M', verbose=False)
             toc = time.process_time() - tic
             hsa_indices[mesh_subtype][mesh_id_num] = hsa_index
 
