@@ -1,23 +1,25 @@
-import os
-import pyvista as pv
+from pathlib import Path
+from vtkmodules.vtkIOPLY import vtkPLYReader
+from tools.DataSetGraph import WritePolyData
 
-# Set the input and output directories
-ply_directory = "path/to/ply_files"
-vtp_directory = "path/to/vtp_output"
+vtp_data_path = Path(
+    'C:/Users/franz/Documents/work/projects/arp/quantification-methods/hsa/3dphoto/franz-hsa/synth_data/vtp')
+ply_data_path = Path(
+    'C:/Users/franz/Documents/work/projects/arp/quantification-methods/hsa/3dphoto/franz-hsa/synth_data/ply')
 
-# Get a list of all .ply files in the input directory
-ply_files = [file for file in os.listdir(ply_directory) if file.endswith('.ply')]
 
-# Iterate through the .ply files and convert/save them to .vtp
-for ply_file in ply_files:
-    # Load the .ply file using PyVista
-    mesh = pv.read(os.path.join(ply_directory, ply_file))
+def ReadPlyfile(ply_file_path):
+    reader = vtkPLYReader()
+    reader.SetFileName(ply_file_path)
+    reader.Update()
+    poly_data = reader.GetOutput()
+    return poly_data
 
-    # Get the base filename without the extension
-    base_filename = os.path.splitext(ply_file)[0]
 
-    # Define the output .vtp filename
-    vtp_filename = base_filename + ".vtp"
+def convert_ply_files_to_vtp():
 
-    # Save the mesh in .vtp format
-    mesh.save(os.path.join(vtp_directory, vtp_filename))
+    for subtype_folder in ply_data_path.iterdir():
+        for mesh_ply_file_path in subtype_folder.glob('*_cp.ply'):
+            vtp_file_path = vtp_data_path / subtype_folder.name / (mesh_ply_file_path.stem + '.vtp')
+            ply_file = ReadPlyfile(str(mesh_ply_file_path))
+            WritePolyData(ply_file, str(vtp_file_path))
