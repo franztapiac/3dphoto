@@ -49,7 +49,7 @@ def get_mesh_info(mesh_vtp_file_path):
     mesh_subtype = match.group(1)
     mesh_id_num = int(match.group(2))
 
-    return mesh_subtype, mesh_id_numw
+    return mesh_subtype, mesh_id_num
 
 
 def calculate_hsa_scores(vtp_data_path):
