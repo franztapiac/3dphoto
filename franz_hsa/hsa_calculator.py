@@ -4,6 +4,7 @@ from Analyze3DPhotogram import PlaceLandmarks, ComputeHSAandRiskScore
 import re
 import pandas as pd
 import os
+import time
 
 
 def load_hsa_scores(file_path):
@@ -34,38 +35,49 @@ def export_to_excel(data_dict, output_path):
     with pd.ExcelWriter(str(output_path.absolute())) as writer:
         for i, subtype in enumerate(list(data_dict.keys())):
             print(f'Exporting {subtype}...')
+
             # Generating the dataframe from the dictionary
             size = len(data_dict.keys())
             df = pd.DataFrame.from_dict(data_dict[subtype], orient='index', columns=['HSA index'])
             df.to_excel(writer, sheet_name='Sheet1', startcol=i*(size+2), startrow=1, index=True)
 
 
+def get_mesh_info(mesh_vtp_file_path):
+
+    pattern = r'^(.*?)_inst_(\d{3})_cp$'
+    match = re.match(pattern, mesh_vtp_file_path.stem)
+    mesh_subtype = match.group(1)
+    mesh_id_num = int(match.group(2))
+
+    return mesh_subtype, mesh_id_numw
+
+
 def calculate_hsa_scores(vtp_data_path):
-    subtypes = ['control', 'sagittal', 'metopic']
-    HSA_indeces = {subtype: {mesh_id: None for mesh_id in range(1, 101)} for subtype in subtypes}
+    hsa_indices = dict()
 
     for subtype_folder in vtp_data_path.iterdir():
-        for mesh_vtp_file_path in subtype_folder.glob('*_cp.vtp'):
-            mesh = ReadPolyData(str(mesh_vtp_file_path))
 
-            # Define the regular expression pattern
-            pattern = r'^(.*?)_inst_(\d{3})_cp$'
-            match = re.match(pattern, mesh_vtp_file_path.stem)
-            mesh_subtype = match.group(1)
-            mesh_id_num = int(match.group(2))
+        hsa_indices[subtype_folder.name] = dict()
+
+        for mesh_vtp_file_path in subtype_folder.glob('*_cp.vtp'):
+
+            # Load mesh and get its info
+            mesh = ReadPolyData(str(mesh_vtp_file_path))
+            mesh_subtype, mesh_id_num = get_mesh_info(mesh_vtp_file_path)
             print(f'Working on {mesh_subtype} case #{mesh_id_num}...')
 
+            # Place landmarks on mesh, compute its hsa index, and store
+            tic = time.process_time()
             landmarks, _ = PlaceLandmarks(mesh, crop=False, verbose=True, crop_percentage=0)
+            _, hsa_index = ComputeHSAandRiskScore(mesh, landmarks, 100, 'M', verbose=False)
+            toc = time.process_time() - tic
+            hsa_indices[mesh_subtype][mesh_id_num] = hsa_index
 
-            _, HSA_index = ComputeHSAandRiskScore(mesh, landmarks, 100, 'M', verbose=False)
-
-            HSA_indeces[mesh_subtype][mesh_id_num] = HSA_index
-
-    return HSA_indeces
+    return hsa_indices
 
 
 if __name__ == '__main__':
-    synthetic_data_dir = Path('./synth_data/vtp_python')  # in .vtp format
+    vtp_format_synth_data_dir = Path('./synth_data/vtp_python')
     hsa_scores_file_path = Path('hsa_scores.xlsx')
     hsa_execution_parameters = {'age': 200,
                                 'sex': 'M',
@@ -75,5 +87,5 @@ if __name__ == '__main__':
     if os.path.exists(hsa_scores_file_path):
         hsa_scores = load_hsa_scores(hsa_scores_file_path)
     else:
-        hsa_scores = calculate_hsa_scores(synthetic_data_dir)
+        hsa_scores = calculate_hsa_scores(vtp_format_synth_data_dir)
         export_to_excel(hsa_scores, output_path=hsa_scores_file_path)
