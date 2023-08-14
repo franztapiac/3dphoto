@@ -2,6 +2,7 @@ numpy
 matplotlib
 openpyxl
 pandas
+pyvista
 scikit-learn==1.1.3
 SimpleITK
 torch

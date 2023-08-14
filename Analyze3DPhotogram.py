@@ -107,10 +107,6 @@ if __name__ == "__main__":
     image = ReadImage(args.input_filename)
     landmarks, _ = PlaceLandmarks(image, crop=args.crop_image, verbose=args.verbose, crop_percentage=args.crop_percentage)
     print(args.crop_percentage)
-    # Export landmarks for quality control
-    file_path = Path(args.input_filename)
-    landmarks_file_path = file_path.parent / '79_landmarks.vtp'
-    WritePolyData(landmarks, str(landmarks_file_path.absolute()))
 
     #now the metrics!
     riskScore, HSA_index = ComputeHSAandRiskScore(image, landmarks, args.age, args.sex, verbose=args.verbose)
