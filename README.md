@@ -9,7 +9,7 @@ This repository contains two models as described in the manuscript.
 
 ## Dependencies:
 Dependencies for this model can be found in the Requirements.txt file. 
-*Once Python is installed, install the requirements with*:
+*Once Python 3.9 is installed, install the requirements with*:
 
 ```python
 python -m pip install -r Requirements.txt
