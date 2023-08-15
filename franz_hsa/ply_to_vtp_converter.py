@@ -2,7 +2,7 @@ import sys
 sys.path.append('../')
 from pathlib import Path
 from vtkmodules.vtkIOPLY import vtkPLYReader
-from tools.DataSetGraph import WritePolyData
+from landmark_eval.DataSetGraph import WritePolyData
 
 vtp_data_path = Path(
     'C:/Users/franz/Documents/work/projects/arp/quantification-methods/hsa/3dphoto/franz-hsa/synth_data/vtp')
