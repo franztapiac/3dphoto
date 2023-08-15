@@ -1,3 +1,5 @@
+import sys
+sys.path.append('../')
 from pathlib import Path
 from vtkmodules.vtkIOPLY import vtkPLYReader
 from tools.DataSetGraph import WritePolyData
