@@ -1,9 +1,7 @@
-/franz-hsa/Laus_file.ply
-/franz-hsa/Laus_file.vtp
-/franz-hsa/sagittal_inst_001_cp_paraview.vtp
-/franz-hsa/sagittal_inst_001_cp_python.vtp
-/franz-hsa/synth_data/
-/franz-hsa/metopic/
-/franz-hsa/sagittal/
-/franz-hsa/sagittal_inst_001_cp.ply
-/franz-hsa/pre-and-post/
+/franz_hsa/conversion-validation/
+/franz_hsa/synth_data/
+/franz_hsa/Laus_file.vtp
+/franz_hsa/Laus_file.ply
+/franz_hsa/hsa_scores.xlsx
+/franz_hsa/hsa_try.xlsx
+/run_various_crop_percentages.py
