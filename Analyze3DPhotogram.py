@@ -1,12 +1,12 @@
-from tools.DataSetGraph import ReadPolyData, WritePolyData, LoadOBJFile
-import pdb
-from os import path
 import argparse
-from tools.LandmarkingUtils import RunInference, AddArraysToLandmarks
+import datetime
+from tools.DataSetGraph import ReadPolyData, WritePolyData, LoadOBJFile
+from tools.LandmarkingUtils import RunInference
 from tools.PhotoAnalysisTools import AlignPatientToTemplate, GenerateSphericalMapOfData, ComputeFromSphericalImage
-import numpy as np
-import vtk
+from franz_hsa.landmark_evaluation import export_landmarks
+from os import path
 from pathlib import Path
+
 
 def ReadImage(imagefilename):
     if imagefilename.endswith('.obj'):
@@ -28,8 +28,9 @@ def PlaceLandmarks(image, crop=True, verbose = True, crop_percentage = 0.4):
     if verbose:
         print('Placing craniofacial landmarks...')
     #run the inference
-    landmarks = RunInference(image, crop=crop, crop_percentage = crop_percentage)
-    return landmarks, image
+    landmarks, cropped_image = RunInference(image, crop=crop, return_cropped_image=True, crop_percentage = crop_percentage)
+    return landmarks, cropped_image
+
 
 def ComputeHSAandRiskScore(image, landmarks, age, sex, verbose = True):
     '''
@@ -51,6 +52,7 @@ def ComputeHSAandRiskScore(image, landmarks, age, sex, verbose = True):
     riskScore, HSA_index = ComputeFromSphericalImage(spherical_image, age, sex)
     return riskScore, HSA_index
 
+
 def ValidVTP(param):
     _, ext = path.splitext(param)
     if (ext.lower() not in ('.vtp','.obj','.vtk')) or not (path.isfile(param)):
@@ -66,7 +68,7 @@ def ConstructArguments():
     parser.add_argument('--age', required = True, type = float, metavar = 'age',
         help='Age of the patient in days.')
 
-    parser.add_argument('--sex', required = True, type = str, metavar = 'sex', choices = ['M','F'], 
+    parser.add_argument('--sex', required = True, type = str, metavar = 'sex', choices = ['M','F'],
         help='Sex of the patient (F is female, M is male).')
 
     parser.add_argument('--verbose', action='store_true', help='Print out information during the processing steps.' )
@@ -82,32 +84,23 @@ def ParseArguments():
     return parser.parse_args()
 
 
-def custom_landmarks_object():
-    landmark_coords = [[1.36976, 1.29766, 43.735],      # Nasion
-                       [-54.8302, 0.423142, -21.3009],  # Tragion right
-                       [53.0547, -5.48717, -21.5361]]   # Tragion left
-    landmark_coords = np.asarray(landmark_coords)
-    # coordinates from sagittal_inst_001_cp_paraview.vtp
-
-    out_landmarks = vtk.vtkPolyData()
-    out_landmarks.SetPoints(vtk.vtkPoints())
-    for p in range(len(landmark_coords)):
-        out_landmarks.GetPoints().InsertNextPoint(landmark_coords[p, 0], landmark_coords[p, 1], landmark_coords[p, 2])
-
-    landmark_names = ["NASION", "TRAGION_RIGHT", "TRAGION_LEFT"]
-    landmarks_vtp = AddArraysToLandmarks(out_landmarks, landmark_names)
-
-    return landmarks_vtp
-
-
 if __name__ == "__main__":
     #parse the arguments, python automatically takes the system args
     args = ParseArguments()
     #first, let's start with the landmarks
     image = ReadImage(args.input_filename)
-    landmarks, _ = PlaceLandmarks(image, crop=args.crop_image, verbose=args.verbose, crop_percentage=args.crop_percentage)
-    print(args.crop_percentage)
+    landmarks, cropped_image = PlaceLandmarks(image, crop=args.crop_image, verbose=args.verbose, crop_percentage=args.crop_percentage)
+
+    # Franz experiments
+    file_path = Path(args.input_filename)
+    crop_percentage = args.crop_percentage
+    age = args.age
+    sex = args.sex
+    print(f'Working with crop percentage {crop_percentage}...')
+    export_landmarks(landmarks, Path(args.input_filename), f'_without_tex_cropped_{crop_percentage}_{age}_days_{sex}_sex')
+    WritePolyData(cropped_image, str(file_path.parent / (file_path.stem + f'_without_tex_cropped_{crop_percentage}_{age}_days_{sex}_sex.vtp')))
 
     #now the metrics!
-    riskScore, HSA_index = ComputeHSAandRiskScore(image, landmarks, args.age, args.sex, verbose=args.verbose)
-    print(f'Results calculated from the image: {args.input_filename}\n\tCraniosynostosis Risk Score: {riskScore:0.2f}%\n\tHead Shape Anomaly Index: {HSA_index:0.2f}')
+    print('f')
+    # riskScore, HSA_index = ComputeHSAandRiskScore(image, landmarks, args.age, args.sex, verbose=args.verbose)
+    # print(f'Results calculated from the image: {args.input_filename}\n\tCraniosynostosis Risk Score: {riskScore:0.2f}%\n\tHead Shape Anomaly Index: {HSA_index:0.2f}')
