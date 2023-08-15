@@ -27,11 +27,16 @@ def get_landmark_coordinates(landmarks_vtp):
     return landmark_coordinates
 
 
-def load_hsa_scores(file_path):
+def load_hsa_scores(hsa_indices_xlsx_path):
+    """
+    Loads the hsa scores from the previously exported .xlsx file of hsa scores.
+    :param hsa_indices_xlsx_path: a Path object to the .xlsx file containing the hsa data.
+    :return: a dictionary with keys as subtypes, inner keys as mesh id numbers, and HSA indices as values.
+    """
 
-    probability_data = pd.read_excel(file_path, header=None)
+    hsa_indices_data = pd.read_excel(hsa_indices_xlsx_path, header=None)
 
-    header = probability_data.iloc[0]
+    header = hsa_indices_data.iloc[0]
     subtypes_df = header[header.notna()]
     subtypes = subtypes_df.values.tolist()
     subtypes_cols = subtypes_df.index.tolist()
@@ -40,29 +45,40 @@ def load_hsa_scores(file_path):
 
     for i, subtype in enumerate(subtypes):
         hsa_scores[subtype] = dict()
-        mesh_ids = probability_data.iloc[2:, subtypes_cols[i]]
+        mesh_ids = hsa_indices_data.iloc[2:, subtypes_cols[i]]
         mesh_ids = mesh_ids[mesh_ids.notna()].tolist()
-        subtype_data = probability_data.iloc[2:, subtypes_cols[i]+1]
+        subtype_data = hsa_indices_data.iloc[2:, subtypes_cols[i]+1]
         subtype_data = subtype_data[subtype_data.notna()].tolist()
         subtype_data = [float(item) for item in subtype_data]
         for j, mesh_id in enumerate(mesh_ids):
             hsa_scores[subtype][mesh_id] = subtype_data[j]
+
     return hsa_scores
 
 
-def export_to_excel(data_dict, output_path):
+def export_to_excel(hsa_indices, output_path):
+    """
+    Exports the HSA indices for meshes of different subtypes.
+    :param hsa_indices: a dictionary with keys as subtypes, inner keys as mesh id numbers, and HSA indices as values.
+    :param output_path: a Path object to the .xlsx file to write the hsa indices data to.
+    """
 
     with pd.ExcelWriter(str(output_path.absolute())) as writer:
-        for i, subtype in enumerate(list(data_dict.keys())):
+        for i, subtype in enumerate(list(hsa_indices.keys())):
             print(f'Exporting {subtype}...')
 
             # Generating the dataframe from the dictionary
-            size = len(data_dict.keys())
-            df = pd.DataFrame.from_dict(data_dict[subtype], orient='index', columns=['HSA index'])
+            size = len(hsa_indices.keys())
+            df = pd.DataFrame.from_dict(hsa_indices[subtype], orient='index', columns=['HSA index'])
             df.to_excel(writer, sheet_name='Sheet1', startcol=i*(size+2), startrow=1, index=True)
 
 
 def get_mesh_info(mesh_vtp_file_path):
+    """
+    Return the subtype and id number of a mesh from a Path object.
+    :param mesh_vtp_file_path: a Path object of a .vtp mesh file.
+    :return: the mesh subtype and id number.
+    """
 
     pattern = r'^(.*?)_inst_(\d{3})_cp$'
     match = re.match(pattern, mesh_vtp_file_path.stem)
@@ -88,34 +104,23 @@ def export_landmarks_object(landmarks, mesh_file_path):
         WritePolyData(landmarks, str(landmarks_file_path.absolute()))
 
 
-def export_ply_landmark_coordinates(landmark_coordinates, vtp_mesh_file_path, time_now):
-    """
-    Export the calculated landmarks as .ply files
-    :param landmark_coordinates: The numpy array of landmark coordinates
-    :param vtp_mesh_file_path: the Path object to the vtp-format mesh
-    :param time_now: the datetime of when the whole experiment was begun
-    """
-
-    landmark_ply = pv.PolyData(landmark_coordinates)
-    landmark_ply_path = vtp_mesh_file_path.parent / ('predicted_landmarks_ply_' + time_now) / (vtp_mesh_file_path.stem +
-                                                                                               '_pred_landmarks.ply')
-    if not os.path.exists(landmark_ply_path.parent):
-        os.makedirs(landmark_ply_path.parent)
-
-    landmark_ply.save(str(landmark_ply_path))
-
-
-def investigate_landmarks(landmarks, vtp_mesh_file_path, time_now):
+def export_landmarks(landmarks, mesh_file_path, time_now=''):
     """
     Export images of the landmarks placed on the mesh.
     :param landmarks: the vtk object with the predicted landmarks.
-    :param vtp_mesh_file_path: the Path object to the file path of the mesh in .vtp format
+    :param mesh_file_path: the Path object to the file path of the mesh
     :param time_now: the datetime of when the whole experiment was begun
     """
 
     landmark_coordinates = get_landmark_coordinates(landmarks)
 
-    export_ply_landmark_coordinates(landmark_coordinates, vtp_mesh_file_path, time_now)
+    landmark_ply = pv.PolyData(landmark_coordinates)
+    landmark_ply_path = mesh_file_path.parent / ('predicted_landmarks_ply' + time_now) / (mesh_file_path.stem +
+                                                                                          '_pred_landmarks.ply')
+    if not os.path.exists(landmark_ply_path.parent):
+        os.makedirs(landmark_ply_path.parent)
+
+    landmark_ply.save(str(landmark_ply_path))
 
 
 def manually_visualise_landmarks(meshes_to_visualise, vis_control):
@@ -175,6 +180,12 @@ def load_mesh_files_info(json_file_path):
 
 
 def calculate_hsa_scores(vtp_data_path, hsa_exec_params):
+    """
+    This function computes the HSA indices for the synthetic data in the vtp path given the HSA execution parameters.
+    :param vtp_data_path: a Path object to a directory with subtype subdirectories, each of which contains .vtp meshes.
+    :param hsa_exec_params: a dictionary with execution parameters.
+    :return: a dictionary of HSA indices for each mesh of the subtypes in the .vtp data path.
+    """
     hsa_indices = dict()
 
     for subtype_folder in vtp_data_path.iterdir():
@@ -191,35 +202,43 @@ def calculate_hsa_scores(vtp_data_path, hsa_exec_params):
             # Place landmarks on mesh, compute its hsa index, and store
             landmarks, _ = PlaceLandmarks(mesh, crop=hsa_exec_params['crop'], verbose=True,
                                           crop_percentage=hsa_exec_params['crop_percentage'])
-            investigate_landmarks(landmarks, mesh_vtp_file_path, hsa_exec_params['time_of_exec'])
 
             if hsa_exec_params['calculate_hsa']:
                 _, hsa_index = ComputeHSAandRiskScore(mesh, landmarks, hsa_exec_params['age'], hsa_exec_params['sex'],
-                                                  verbose=False)
+                                                      verbose=False)
                 hsa_indices[mesh_subtype][mesh_id_num] = hsa_index
 
     return hsa_indices
 
 
 def measure_hsa_of_synth_data():
-    vtp_format_synth_data_dir = Path('./synth_data/vtp_python')
+    """
+    Run this to load onto memory the HSA indices of the synthetic data.
+    Define the path to the existing data for loading, and to the synthetic data for execution.
+    """
+
     hsa_scores_file_path = Path('hsa_scores.xlsx')
-    time_now = datetime.datetime.now().strftime("%B_%d_%H_%M")
-    hsa_execution_parameters = {'age': 200,
-                                'sex': 'M',
-                                'crop': False,
-                                'crop_percentage': 0,
-                                'calculate_hsa': False,
-                                'time_of_exec': time_now}
 
     if os.path.exists(hsa_scores_file_path):
         hsa_scores = load_hsa_scores(hsa_scores_file_path)
     else:
+        vtp_format_synth_data_dir = Path('./synth_data/vtp_python')
+        exec_time_label = datetime.datetime.now().strftime("%B_%d_%H_%M")
+        hsa_execution_parameters = {'age': 200,
+                                    'sex': 'M',
+                                    'crop': False,
+                                    'crop_percentage': 0,
+                                    'calculate_hsa': False,
+                                    'time_label_of_exec': exec_time_label}
         hsa_scores = calculate_hsa_scores(vtp_format_synth_data_dir, hsa_execution_parameters)
         export_to_excel(hsa_scores, output_path=hsa_scores_file_path)
 
 
 def visualise_model_both_landmarks():
+    """
+    Run this to get a PyVista plotter showing a synthetic mesh with its predicted landmarks.
+    The meshes shown are from the test dataset of the model trained with all subtypes.
+    """
     model_both_test_data_path = Path('./synth_data/test_datasets/testdata_model_0108_both.json.json')
     dataset_meshes_ids = load_mesh_files_info(model_both_test_data_path)
     visualise_control = False
@@ -227,6 +246,10 @@ def visualise_model_both_landmarks():
 
 
 def visualise_model_metopic_landmarks():
+    """
+    Run this to get a PyVista plotter showing a synthetic mesh with its predicted landmarks.
+    The meshes shown are from the test dataset of the model trained only with control and metopic meshes.
+    """
     model_both_test_data_path = Path('./synth_data/test_datasets/testdata_model_0108_metopicB.json.json')
     dataset_meshes_ids = load_mesh_files_info(model_both_test_data_path)
     visualise_control = False
@@ -234,6 +257,10 @@ def visualise_model_metopic_landmarks():
 
 
 def visualise_model_sagittal_landmarks():
+    """
+    Run this to get a PyVista plotter showing a synthetic mesh with its predicted landmarks.
+    The meshes shown are from the test dataset of the model trained only with control and sagittal meshes.
+    """
     model_both_test_data_path = Path('./synth_data/test_datasets/testdata_model_0108_sagittalB.json.json')
     dataset_meshes_ids = load_mesh_files_info(model_both_test_data_path)
     visualise_control = False
