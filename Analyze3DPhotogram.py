@@ -1,5 +1,4 @@
 import argparse
-import datetime
 from tools.DataSetGraph import ReadPolyData, WritePolyData, LoadOBJFile
 from tools.LandmarkingUtils import RunInference
 from tools.PhotoAnalysisTools import AlignPatientToTemplate, GenerateSphericalMapOfData, ComputeFromSphericalImage
@@ -101,6 +100,5 @@ if __name__ == "__main__":
     WritePolyData(cropped_image, str(file_path.parent / (file_path.stem + f'_without_tex_cropped_{crop_percentage}_{age}_days_{sex}_sex.vtp')))
 
     #now the metrics!
-    print('f')
-    # riskScore, HSA_index = ComputeHSAandRiskScore(image, landmarks, args.age, args.sex, verbose=args.verbose)
-    # print(f'Results calculated from the image: {args.input_filename}\n\tCraniosynostosis Risk Score: {riskScore:0.2f}%\n\tHead Shape Anomaly Index: {HSA_index:0.2f}')
+    riskScore, HSA_index = ComputeHSAandRiskScore(image, landmarks, args.age, args.sex, verbose=args.verbose)
+    print(f'Results calculated from the image: {args.input_filename}\n\tCraniosynostosis Risk Score: {riskScore:0.2f}%\n\tHead Shape Anomaly Index: {HSA_index:0.2f}')
