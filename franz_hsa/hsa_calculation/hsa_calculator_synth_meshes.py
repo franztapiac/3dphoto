@@ -10,35 +10,6 @@ from tools.DataSetGraph import ReadPolyData
 random.seed(0)
 
 
-def load_hsa_scores(hsa_indices_xlsx_path):
-    """
-    Loads the hsa scores from the previously exported .xlsx file of hsa scores.
-    :param hsa_indices_xlsx_path: a Path object to the .xlsx file containing the hsa data.
-    :return: a dictionary with keys as subtypes, inner keys as mesh id numbers, and HSA indices as values.
-    """
-
-    hsa_indices_data = pd.read_excel(hsa_indices_xlsx_path, header=None)
-
-    header = hsa_indices_data.iloc[0]
-    subtypes_df = header[header.notna()]
-    subtypes = subtypes_df.values.tolist()
-    subtypes_cols = subtypes_df.index.tolist()
-
-    hsa_scores = dict()
-
-    for i, subtype in enumerate(subtypes):
-        hsa_scores[subtype] = dict()
-        mesh_ids = hsa_indices_data.iloc[2:, subtypes_cols[i]]
-        mesh_ids = mesh_ids[mesh_ids.notna()].tolist()
-        subtype_data = hsa_indices_data.iloc[2:, subtypes_cols[i]+1]
-        subtype_data = subtype_data[subtype_data.notna()].tolist()
-        subtype_data = [float(item) for item in subtype_data]
-        for j, mesh_id in enumerate(mesh_ids):
-            hsa_scores[subtype][mesh_id] = subtype_data[j]
-
-    return hsa_scores
-
-
 def export_to_excel(hsa_indices, output_path):
     """
     Exports the HSA indices for meshes of different subtypes.
@@ -111,21 +82,28 @@ def load_hsa_of_synth_data():
 
     hsa_scores_file_path = Path('hsa_scores.xlsx')
 
-    if os.path.exists(hsa_scores_file_path):
-        hsa_scores = load_hsa_scores(hsa_scores_file_path)
-    else:
-        vtp_format_synth_data_dir = Path('../synth_data/vtp_python')
-        exec_time_label = datetime.datetime.now().strftime("%B_%d_%H_%M")
-        hsa_execution_parameters = {'age': 200,
-                                    'sex': 'M',
-                                    'crop': False,
-                                    'crop_percentage': 0,
-                                    'calculate_hsa': False,
-                                    'time_label_of_exec': exec_time_label}
-        hsa_scores = calculate_hsa_scores(vtp_format_synth_data_dir, hsa_execution_parameters)
-        export_to_excel(hsa_scores, output_path=hsa_scores_file_path)
+    vtp_format_synth_data_dir = Path('../synth_data/vtp_python')
+    exec_time_label = datetime.datetime.now().strftime("%B_%d_%H_%M")
+    hsa_execution_parameters = {'age': 200,
+                                'sex': 'M',
+                                'crop': False,
+                                'crop_percentage': 0,
+                                'calculate_hsa': False,
+                                'time_label_of_exec': exec_time_label}
+    hsa_scores = calculate_hsa_scores(vtp_format_synth_data_dir, hsa_execution_parameters)
+    export_to_excel(hsa_scores, output_path=hsa_scores_file_path)
 
 
 if __name__ == '__main__':
     load_hsa_of_synth_data()
 
+# # computing hsa on untextured, synthetic meshes
+#
+# - load landmarks file
+# - delete landmarks
+# - save redueced landmarks file
+# - changing euryon landmarks in _innit__
+# - define
+# for each synthetic mesh of interest:
+# 	- vis landmarks
+# 	- compute hsa with my defined landmarks
