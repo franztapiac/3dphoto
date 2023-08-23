@@ -5,19 +5,21 @@ franz.tapia-chaca@outlook.com
 
 ## <u>HSA calculation</u>
 
-### ``hsa_calculator.py``
+Within this folder, there are 3 scripts:
 
-### ``measure_hsa_pre_n_post_op.py``
+### 1. ``hsa_calculator_synth_meshes.py``
 
-### ``run_various_crop_percentages.py``
+### 2. ``hsa_calculator_patient_pre_n_post_op.py``
+
+### 3. ``run_various_crop_percentages.py``
 
 ## <u>Landmark prediction evaluation</u>
 
 Within this folder, there are 2 scripts:
 
-### ``export_landmarks.py``
+### 1. ``export_landmarks.py``
 
-### ``visualise_landmarks.py``
+### 2. ``visualise_landmarks.py``
 
 ![Example landmark visualisation](../diagrams/landmark_vis_example.png)
 
@@ -35,6 +37,28 @@ the control meshes.
 
 
 ### ``conversion-validate.py``
+
+### ``paraview_ply_to_vtp_converter.py``
+
+This is a script that should be executed from the ParaView Python Script Editor.
+If you try to execute it from your Python IDE, you may experience errors, even if you install paraview with pip.
+ParaView requires its own environment called paraview python (which is installed within the software), 
+and understanding how to establish paraview python into your separate python environment is complicated.
+
+To execute this script from the ParaView Python Script Editor, only edit the ply_data_path and 
+the vtp_data_path variables.
+The ply_data_path should point to a directory with subtypes as subdirectories. 
+The .ply meshes should be within those subdirectories
+The vtp_data_path should have a similar directory structure, and be empty.
+
+For each mesh of each subtype in ply_data_path, the script will automatically load the .ply mesh and 
+export it as .vtp.
+
+Download ParaView from [here](https://www.paraview.org/download/).
+
+To access the ParaView Python Script Editor: Tools / Python Script Editor. Load this script for executing.
+Then click: File / Run to execute the script.
+
 
 ### ``ply_to_vtp_converter.py``
 
