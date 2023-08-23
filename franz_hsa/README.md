@@ -1,0 +1,21 @@
+# Implementation of the HSA index at the Erasmus MC
+Franz A. Tapia Chaca
+
+franz.tapia-chaca@outlook.com
+
+
+## ``landmark_evaluation.py``
+
+![Example landmark visualisation](../diagrams/landmark_vis_example.png)
+
+Generates a window that displays meshes with landmarks. The meshes can be those from the test set of a KDE model.
+The landmarks can be those predicted with Elkhill's landmark prediction method.
+
+Three functions are used to generate this functionality:
+1. visualise_landmarks_per_mesh: creates the window displaying a mesh and its landmarks. Click 'X' for the next mesh. 
+2. get_mesh_ids_per_subtype: gets mesh subtype and id for all meshes in a test set file (file has paths to mesh files). 
+3. visualise_landmarks_per_model: receives user input for which model's meshes to display, and whether to display 
+the control meshes. 
+
+
+## ``export_landmarks.py``
