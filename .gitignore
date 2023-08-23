@@ -1,8 +1,10 @@
-/franz_hsa/conversion-validation/
+/franz_hsa/synth_data/for_validating_ply_to_vtp_conversion/
 /franz_hsa/synth_data/
 /franz_hsa/Laus_file.vtp
 /franz_hsa/Laus_file.ply
 /franz_hsa/hsa_scores.xlsx
 /franz_hsa/hsa_try.xlsx
-/run_various_crop_percentages.py
-/franz_hsa/experiments/measure-hsa-pre-n-post-op.py
+/franz_hsa/hsa_calculation/run_various_crop_percentages.py
+/franz_hsa/hsa_calculation/hsa_calculator_patient_pre_n_post_op.py
+/franz_hsa/experiments/
+.idea/workspace.xml
