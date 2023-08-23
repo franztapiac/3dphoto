@@ -114,7 +114,7 @@ def load_hsa_of_synth_data():
     if os.path.exists(hsa_scores_file_path):
         hsa_scores = load_hsa_scores(hsa_scores_file_path)
     else:
-        vtp_format_synth_data_dir = Path('./synth_data/vtp_python')
+        vtp_format_synth_data_dir = Path('../synth_data/vtp_python')
         exec_time_label = datetime.datetime.now().strftime("%B_%d_%H_%M")
         hsa_execution_parameters = {'age': 200,
                                     'sex': 'M',

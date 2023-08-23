@@ -4,9 +4,9 @@ from Analyze3DPhotogram import PlaceLandmarks, ComputeHSAandRiskScore, ReadImage
 
 def get_data_dir(device):
     if device == 'cpu':
-        return Path('conversion-validation')
+        return Path('../synth_data/for_validating_ply_to_vtp_conversion')
     elif device == 'cluster':
-        return Path('/data/scratch/r092382/conversion-validation')
+        return Path('/data/scratch/r092382/for_validating_ply_to_vtp_conversion')
 
 
 def test_conversion(device):

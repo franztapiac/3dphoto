@@ -3,8 +3,21 @@ Franz A. Tapia Chaca
 
 franz.tapia-chaca@outlook.com
 
+## <u>HSA calculation</u>
 
-## ``landmark_evaluation.py``
+### ``hsa_calculator.py``
+
+### ``measure_hsa_pre_n_post_op.py``
+
+### ``run_various_crop_percentages.py``
+
+## <u>Landmark prediction evaluation</u>
+
+Within this folder, there are 2 scripts:
+
+### ``export_landmarks.py``
+
+### ``visualise_landmarks.py``
 
 ![Example landmark visualisation](../diagrams/landmark_vis_example.png)
 
@@ -18,4 +31,20 @@ Three functions are used to generate this functionality:
 the control meshes. 
 
 
-## ``export_landmarks.py``
+## <u>.ply to .vtp conversion</u>
+
+
+### ``conversion-validate.py``
+
+### ``ply_to_vtp_converter.py``
+
+
+## Not a folder, others:
+
+
+### ``get_file_names.py``
+
+
+### ``test.py``
+
+### ``texture_writer.py``
