@@ -5,50 +5,68 @@ from pathlib import Path
 import pyvista as pv
 import vtk
 
-# This code was kindly provided by:
-# Matthias Schaufelberger, M.Sc.
-# Scientific Staff
-# Karlsruhe Institute of Technology (KIT)
-# Institute of Biomedical Engineering
-
-# The application of texture was kindly provided
+# The functionalities here for loading the texture model, generating a mesh texture object,
+# writing the texture to a mesh, and exporting were kindly provided by:
+# Matthias Schaufelberger, M.Sc., Scientific Staff at the Institute of Biomedical Engineering
+# in the Karlsruhe Institute of Technology (KIT)
 
 
-def write_shape_texture_vtp(points, cells, texture, name):
+def export_vtp_mesh(mesh_polydata, mesh_vtp_path):
+    """
+    Exports the polydata mesh with a 'Texture' array in the defined path.
+    :param mesh_polydata: a vtk PolyData object with the mesh points, cells, and texture data.
+    :param mesh_vtp_path: a string for the full path for the .vtp mesh to export.
+    """
 
-    # Define points
+    ply_writer = vtk.vtkXMLPolyDataWriter()
+    ply_writer.SetFileName(mesh_vtp_path)
+    ply_writer.SetInputData(mesh_polydata)
+    ply_writer.Write()
+
+
+def create_vtp_mesh(mesh_points, mesh_cells):
+    """
+    Creates and returns a vtk PolyData mesh object from the .ply mesh points and cells.
+    :param mesh_points: a numpy array (45,081 x 3) with the mesh point X,Y,Z coordinates.
+    :param mesh_cells: a numpy array (45,081 x 3) with the point IDs that constitute each cell.
+    :return: a vtk PolyData mesh object from the .ply mesh points and cells.
+    """
+
     vtk_points = vtk.vtkPoints()
-    for pt in points:
-        vtk_points.InsertNextPoint(pt[0], pt[1], pt[2])
+    for point in mesh_points:
+        vtk_points.InsertNextPoint(point[0], point[1], point[2])
 
-    # Define cells
     vtk_cells = vtk.vtkCellArray()
-    for cl in cells:
+    for cell in mesh_cells:
         triangle = vtk.vtkTriangle()
-        triangle.GetPointIds().SetId(0, cl[0])
-        triangle.GetPointIds().SetId(1, cl[1])
-        triangle.GetPointIds().SetId(2, cl[2])
+        triangle.GetPointIds().SetId(0, cell[0])
+        triangle.GetPointIds().SetId(1, cell[1])
+        triangle.GetPointIds().SetId(2, cell[2])
         vtk_cells.InsertNextCell(triangle)
 
-    # Create mesh with points and cells
-    pd = vtk.vtkPolyData()
-    pd.SetPoints(vtk_points)
-    pd.SetPolys(vtk_cells)
+    mesh_polydata = vtk.vtkPolyData()
+    mesh_polydata.SetPoints(vtk_points)
+    mesh_polydata.SetPolys(vtk_cells)
 
-    # Update the mesh with a Texture array corresponding to each point
+    return mesh_polydata
+
+
+def write_texture_on_vtp_mesh(mesh_polydata, mesh_texture):
+    """
+    Writes the texture information into the vtk PolyData object.
+    :param mesh_polydata: a vtk PolyData mesh object with 45,081 points.
+    :param mesh_texture: a numpy array (45,081 x 3) with RGB texture information for each mesh point.
+    """
+
     colors = vtk.vtkUnsignedCharArray()
     colors.SetNumberOfComponents(3)
     colors.SetName('Texture')
-    for val in texture:
-        colors.InsertNextTuple3(*val)
-    pd.GetPointData().SetScalars(colors)
-    pd.Modified()
 
-    # Export the mesh as .vtp
-    ply_writer = vtk.vtkXMLPolyDataWriter()
-    ply_writer.SetFileName(name)
-    ply_writer.SetInputData(pd)
-    ply_writer.Write()
+    for point_texture in mesh_texture:
+        colors.InsertNextTuple3(*point_texture)
+
+    mesh_polydata.GetPointData().SetScalars(colors)
+    mesh_polydata.Modified()
 
 
 def get_mesh_data(mesh_file_path):
@@ -85,16 +103,16 @@ def load_texture_model(tex_model_path):
     return texture_mean, texture_pcs, texture_var
 
 
-def generate_mesh_texture(texture_mean, texture_pcs, texture_var):
+def generate_mesh_texture(tex_mean, tex_pcs, tex_var):
     """
-    Generates a unique texture for a mesh.
-    :param texture_mean: A numpy array (1 x 135,243) for the mean texture object.
-    :param texture_pcs: A numpy array (50 x 135,243) for the principal component basis of varying textures.
-    :param texture_var: A numpy array (1 x 50) for the texture variability.
+    Generates a unique texture for a 45,081-point mesh.
+    :param tex_mean: A numpy array (1 x 135,243) for the mean texture object.
+    :param tex_pcs: A numpy array (50 x 135,243) for the principal component basis of varying textures.
+    :param tex_var: A numpy array (1 x 50) for the texture variability.
     :return: A numpy array (45,081 x 3) with texture data for a 45,081-point mesh.
     """
     var_weighting = np.random.normal(loc=0.2, scale=0.5, size=(50,))
-    texture_to_process = texture_mean + texture_var ** 0.5 * var_weighting @ texture_pcs
+    texture_to_process = tex_mean + tex_var ** 0.5 * var_weighting @ tex_pcs
 
     mesh_texture = np.array(texture_to_process).reshape((-1, 3)) * 255
     mesh_texture[mesh_texture > 255] = 255
@@ -103,8 +121,17 @@ def generate_mesh_texture(texture_mean, texture_pcs, texture_var):
     return mesh_texture
 
 
-def create_mesh_directory(tex_files_path, subtype_folder, mesh_path):
-    textured_mesh_path = tex_files_path / subtype_folder.name / (mesh_path.stem + '.vtp')
+def create_mesh_directory(tex_files_path, subtype_name, mesh_name):
+    """
+    Defines the path and the parent path for the mesh to export in .vtp format.
+    :param tex_files_path: a Path obj to the (potentially empty) dir to export the textured meshes.
+    :param subtype_name: a string for the name of the subtype to create a subdirectory with.
+    :param mesh_name: a string for the name of the input mesh .ply file.
+    :return: a Path object for the exporting mesh in .vtp format.
+
+    """
+    textured_mesh_path = tex_files_path / subtype_name / (mesh_name + '.vtp')
+
     if not os.path.exists(textured_mesh_path.parent):
         os.mkdir(textured_mesh_path.parent)
 
@@ -122,14 +149,20 @@ def generate_textured_files(tex_model_path, untex_files_path, tex_files_path):
     texture_mean, texture_pcs, texture_var = load_texture_model(tex_model_path)
 
     for subtype_folder in untex_files_path.iterdir():
-
         for mesh_path in subtype_folder.glob('*.ply'):
-
+            print(f'Loaded {subtype_folder.name} mesh {mesh_path.stem} in .ply format.')
             mesh_points, mesh_cells = get_mesh_data(mesh_path)
-            mesh_texture = generate_mesh_texture(texture_mean, texture_pcs, texture_var)
-            textured_mesh_path = create_mesh_directory(tex_files_path, subtype_folder, mesh_path)
-            write_shape_texture_vtp(mesh_points, mesh_cells, mesh_texture, str(textured_mesh_path.absolute()))
-            print('f')
+            mesh_vtp = create_vtp_mesh(mesh_points=mesh_points, mesh_cells=mesh_cells)
+
+            mesh_texture = generate_mesh_texture(tex_mean=texture_mean, tex_pcs=texture_pcs, tex_var=texture_var)
+
+            write_texture_on_vtp_mesh(mesh_polydata=mesh_vtp, mesh_texture=mesh_texture)
+
+            textured_mesh_path = create_mesh_directory(tex_files_path=tex_files_path,
+                                                       subtype_name=subtype_folder.name, mesh_name=mesh_path.stem)
+            export_vtp_mesh(mesh_polydata=mesh_vtp, mesh_vtp_path=textured_mesh_path)
+            print(f'Exported {subtype_folder.name} mesh {textured_mesh_path.stem} in .vtp format '
+                  f'at {str(textured_mesh_path)}.\n')
 
 
 if __name__ == '__main__':
