@@ -3,6 +3,20 @@ Franz A. Tapia Chaca
 
 franz.tapia-chaca@outlook.com
 
+## <u>Appending texture to synthetic meshes</u>
+
+Within this folder, there is 1 script:
+
+### 1. ``demo_texture.py``
+
+With this script, we can load synthetic meshes published by Matthias Schaufelberger et al. 
+([publication](https://www.mdpi.com/2075-4418/12/7/1516)) and a texture_model.h5 to apply textures
+to the synthetic meshes.
+
+Input: a directory with untextured, synthetic meshes in .vtp format.
+
+Output: a new directory with textured versions of the synthetic meshes, also in .vtp format.
+
 ## <u>HSA calculation</u>
 
 Within this folder, there are 3 scripts:
