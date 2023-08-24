@@ -105,13 +105,16 @@ def load_hsa_of_synth_data():
 
     # Defining hsa storage path
     hsa_scores_file_path = define_hsa_score_storage_path(data_type='synthetic', sub_data_type='down_sampled',
-                                                           with_texture=False)
+                                                         with_texture=False)
 
     hsa_execution_parameters = {'age': 200,
                                 'sex': 'M',
-                                'crop': False,
-                                'crop_percentage': 0,
-                                'calculate_hsa': False}
+                                'crop': False,  # b/c synthetic meshes are cropped through neck already
+                                'crop_percentage': 0,  # b/c synthetic meshes are cropped through neck already
+                                'calculate_hsa': True,
+                                'landmark_placement': 'manual', # or prediction
+                                'export_landmarks': True}
+
     hsa_scores = calculate_hsa_scores(data_path, hsa_execution_parameters)
     export_to_excel(hsa_scores, output_path=hsa_scores_file_path)
 
