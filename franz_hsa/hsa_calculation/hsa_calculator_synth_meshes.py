@@ -1,5 +1,6 @@
 from Analyze3DPhotogram import PlaceLandmarks, ComputeHSAandRiskScore
 import datetime
+import os
 import pandas as pd
 from pathlib import Path
 import random
@@ -7,8 +8,9 @@ import re
 from tools.DataSetGraph import ReadPolyData
 random.seed(0)
 
-work_path = Path(r"C:\Users\franz\Documents\work\projects\arp")
-storage_path = work_path / Path(r"quantification-methods\tareq\kde_classifier\KDE_shape_classifier\experiments")
+storage_path = Path(r"C:\Users\franz\Documents\work\projects\arp\quantification-methods\tareq\kde_classifier\KDE_shape_classifier\experiments")
+data_path = Path(r"C:\Users\franz\Documents\work\projects\arp\data")
+hsa_exec_params_db_path = Path(r"C:\Users\franz\Documents\work\projects\arp\quantification-methods\hsa\3dphoto\franz_hsa\hsa_calculation\hsa_execution_parameters.xlsx")
 
 
 def export_to_excel(hsa_indices, output_path):
@@ -43,6 +45,10 @@ def get_mesh_info(mesh_vtp_file_path):
     return mesh_subtype, mesh_id_num
 
 
+def place_landmarks_manually():
+    return 1
+
+
 def calculate_hsa_scores(vtp_data_path, hsa_exec_params):
     """
     This function computes the HSA indices for the synthetic data in the vtp path given the HSA execution parameters.
@@ -63,9 +69,12 @@ def calculate_hsa_scores(vtp_data_path, hsa_exec_params):
             mesh_subtype, mesh_id_num = get_mesh_info(mesh_vtp_file_path)
             print(f'Working on {mesh_subtype} case #{mesh_id_num}...')
 
-            # Place landmarks on mesh, compute its hsa index, and store
-            landmarks, _ = PlaceLandmarks(mesh, crop=hsa_exec_params['crop'], verbose=True,
-                                          crop_percentage=hsa_exec_params['crop_percentage'])
+            if hsa_exec_params['landmark_placement'] == 'automatic':
+                # Place landmarks on mesh, compute its hsa index, and store
+                landmarks, _ = PlaceLandmarks(mesh, crop=hsa_exec_params['crop'], verbose=True,
+                                              crop_percentage=hsa_exec_params['crop_percentage'])
+            else:  # 'manual'
+                landmarks = place_landmarks_manually()
 
             if hsa_exec_params['calculate_hsa']:
                 _, hsa_index = ComputeHSAandRiskScore(mesh, landmarks, hsa_exec_params['age'], hsa_exec_params['sex'],
@@ -80,9 +89,9 @@ def define_hsa_score_storage_path(data_type, sub_data_type, with_texture):
     exp_date = datetime.date.today().strftime("%m%d")
 
     if with_texture:
-        texture_state = 'with_texture'
+        texture_state = 'textured'
     else:
-        texture_state = 'without_texture'
+        texture_state = 'untextured'
 
     if data_type == 'synthetic':
         hsa_scores_file_path = storage_path / f'{exp_date}_hsa_indices_{data_type}_data' \
@@ -94,28 +103,29 @@ def define_hsa_score_storage_path(data_type, sub_data_type, with_texture):
     return hsa_scores_file_path
 
 
+def load_hsa_exec_parameters(params_db_path, hsa_exp_index):
+
+    hsa_exec_params_db = pd.read_excel(params_db_path, index_col=0)  # index_col = 0 s.t. hsa_exp_index = df index
+
+    hsa_exec_params = hsa_exec_params_db.loc[hsa_exp_index].to_dict()
+
+    return hsa_exec_params
+
+
 def load_hsa_of_synth_data():
     """
     Run this to load onto memory the HSA indices of the synthetic data.
     Define the path to the existing data for loading, and to the synthetic data for execution.
     """
 
-    # Defining data path
-    data_path = work_path / Path(r"\data\synthetic_data\synth_data_downsampled_unclipped_vtp_paraview")
+    hsa_exec_params = load_hsa_exec_parameters(params_db_path=hsa_exec_params_db_path, hsa_exp_index=1)
 
-    # Defining hsa storage path
-    hsa_scores_file_path = define_hsa_score_storage_path(data_type='synthetic', sub_data_type='down_sampled',
-                                                         with_texture=False)
+    hsa_scores_file_path = define_hsa_score_storage_path(data_type=hsa_exec_params['data_type'],
+                                                         sub_data_type=hsa_exec_params['sub_data_type'],
+                                                         with_texture=hsa_exec_params['with_texture'])
 
-    hsa_execution_parameters = {'age': 200,
-                                'sex': 'M',
-                                'crop': False,  # b/c synthetic meshes are cropped through neck already
-                                'crop_percentage': 0,  # b/c synthetic meshes are cropped through neck already
-                                'calculate_hsa': True,
-                                'landmark_placement': 'manual', # or prediction
-                                'export_landmarks': True}
-
-    hsa_scores = calculate_hsa_scores(data_path, hsa_execution_parameters)
+    exp_data_path = data_path / hsa_exec_params['exp_data_path']
+    hsa_scores = calculate_hsa_scores(vtp_data_path=exp_data_path, hsa_exec_params=hsa_exec_params)
     export_to_excel(hsa_scores, output_path=hsa_scores_file_path)
 
 
