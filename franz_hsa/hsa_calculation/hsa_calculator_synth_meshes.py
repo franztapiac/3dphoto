@@ -1,13 +1,14 @@
-from pathlib import Path
 from Analyze3DPhotogram import PlaceLandmarks, ComputeHSAandRiskScore
-import re
-import pandas as pd
-import os
 import datetime
-
+import pandas as pd
+from pathlib import Path
 import random
+import re
 from tools.DataSetGraph import ReadPolyData
 random.seed(0)
+
+work_path = Path(r"C:\Users\franz\Documents\work\projects\arp")
+storage_path = work_path / Path(r"quantification-methods\tareq\kde_classifier\KDE_shape_classifier\experiments")
 
 
 def export_to_excel(hsa_indices, output_path):
@@ -74,36 +75,48 @@ def calculate_hsa_scores(vtp_data_path, hsa_exec_params):
     return hsa_indices
 
 
+def define_hsa_score_storage_path(data_type, sub_data_type, with_texture):
+
+    exp_date = datetime.date.today().strftime("%m%d")
+
+    if with_texture:
+        texture_state = 'with_texture'
+    else:
+        texture_state = 'without_texture'
+
+    if data_type == 'synthetic':
+        hsa_scores_file_path = storage_path / f'{exp_date}_hsa_indices_{data_type}_data' \
+                                              f'_{sub_data_type}_{texture_state}.xlsx'
+    else:  # data_type = 'patient'
+        hsa_scores_file_path = storage_path / f'{exp_date}_hsa_indices_{data_type}_data' \
+                                              f'_{sub_data_type}.xlsx'
+
+    return hsa_scores_file_path
+
+
 def load_hsa_of_synth_data():
     """
     Run this to load onto memory the HSA indices of the synthetic data.
     Define the path to the existing data for loading, and to the synthetic data for execution.
     """
 
-    hsa_scores_file_path = Path('hsa_scores.xlsx')
+    # Defining data path
+    data_path = work_path / Path(r"\data\synthetic_data\synth_data_downsampled_unclipped_vtp_paraview")
 
-    vtp_format_synth_data_dir = Path('../synth_data/vtp_python')
-    exec_time_label = datetime.datetime.now().strftime("%B_%d_%H_%M")
+    # Defining hsa storage path
+    hsa_scores_file_path = define_hsa_score_storage_path(data_type='synthetic', sub_data_type='down_sampled',
+                                                           with_texture=False)
+
     hsa_execution_parameters = {'age': 200,
                                 'sex': 'M',
                                 'crop': False,
                                 'crop_percentage': 0,
-                                'calculate_hsa': False,
-                                'time_label_of_exec': exec_time_label}
-    hsa_scores = calculate_hsa_scores(vtp_format_synth_data_dir, hsa_execution_parameters)
+                                'calculate_hsa': False}
+    hsa_scores = calculate_hsa_scores(data_path, hsa_execution_parameters)
     export_to_excel(hsa_scores, output_path=hsa_scores_file_path)
 
 
 if __name__ == '__main__':
     load_hsa_of_synth_data()
 
-# # computing hsa on untextured, synthetic meshes
-#
-# - load landmarks file
-# - delete landmarks
-# - save redueced landmarks file
-# - changing euryon landmarks in _innit__
-# - define
-# for each synthetic mesh of interest:
-# 	- vis landmarks
-# 	- compute hsa with my defined landmarks
+

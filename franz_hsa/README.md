@@ -3,7 +3,7 @@ Franz A. Tapia Chaca
 
 franz.tapia-chaca@outlook.com
 
-## <u>Appending texture to synthetic meshes</u>
+## <u>Writing texture onto .vtp synthetic meshes</u>
 
 Within this folder, there is 1 script:
 
