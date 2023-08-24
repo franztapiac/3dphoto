@@ -7,15 +7,26 @@ franz.tapia-chaca@outlook.com
 
 Within this folder, there is 1 script:
 
-### 1. ``demo_texture.py``
+### 1. ``texture_generator.py``
 
-With this script, we can load synthetic meshes published by Matthias Schaufelberger et al. 
-([publication](https://www.mdpi.com/2075-4418/12/7/1516)) and a texture_model.h5 to apply textures
-to the synthetic meshes.
+![Addition of texture to synthetic mesh](../diagrams/texture_writing.png)
 
-Input: a directory with untextured, synthetic meshes in .vtp format.
+With this script, we can load the synthetic meshes (constituted by 45,081 points) 
+and the texture_model.h5 published by Matthias Schaufelberger et al. 
+([publication](https://www.mdpi.com/2075-4418/12/7/1516)) to apply unique textures to those meshes.
 
-Output: a new directory with textured versions of the synthetic meshes, also in .vtp format.
+Given three paths (the path to the texture model, untextured data directory, and the export directory), 
+the script works by:
+1. Loading the texture model from texture_model.h5.
+And then for each mesh:
+2. Getting its points and cells,
+3. Creating a .vtp mesh object,
+4. Generating a texture for the mesh from the PCA model,
+5. Writing the texture onto the .vtp object,
+6. Creating a directory for exporting the .vtp mesh, and
+7. Exporting the .vtp mesh in the export directory.
+
+To run the script, define the three paths at the main call of the script.
 
 ## <u>HSA calculation</u>
 

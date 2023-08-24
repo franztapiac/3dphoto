@@ -130,7 +130,10 @@ def create_mesh_directory(tex_files_path, subtype_name, mesh_name):
     :return: a Path object for the exporting mesh in .vtp format.
 
     """
-    textured_mesh_path = tex_files_path / subtype_name / (mesh_name + '.vtp')
+    if subtype_name in mesh_name:
+        textured_mesh_path = tex_files_path / subtype_name / f'{mesh_name}.vtp'
+    else:
+        textured_mesh_path = tex_files_path / subtype_name / f'{subtype_name}_{mesh_name}.vtp'
 
     if not os.path.exists(textured_mesh_path.parent):
         os.mkdir(textured_mesh_path.parent)
@@ -150,10 +153,12 @@ def generate_textured_files(tex_model_path, untex_files_path, tex_files_path):
 
     for subtype_folder in untex_files_path.iterdir():
         for mesh_path in subtype_folder.glob('*.ply'):
+
             print(f'Loaded {subtype_folder.name} mesh {mesh_path.stem} in .ply format.')
             mesh_points, mesh_cells = get_mesh_data(mesh_path)
             mesh_vtp = create_vtp_mesh(mesh_points=mesh_points, mesh_cells=mesh_cells)
 
+            print(f'Generating and applying texture to {subtype_folder.name} mesh {mesh_path.stem}...')
             mesh_texture = generate_mesh_texture(tex_mean=texture_mean, tex_pcs=texture_pcs, tex_var=texture_var)
 
             write_texture_on_vtp_mesh(mesh_polydata=mesh_vtp, mesh_texture=mesh_texture)
@@ -161,7 +166,7 @@ def generate_textured_files(tex_model_path, untex_files_path, tex_files_path):
             textured_mesh_path = create_mesh_directory(tex_files_path=tex_files_path,
                                                        subtype_name=subtype_folder.name, mesh_name=mesh_path.stem)
             export_vtp_mesh(mesh_polydata=mesh_vtp, mesh_vtp_path=textured_mesh_path)
-            print(f'Exported {subtype_folder.name} mesh {textured_mesh_path.stem} in .vtp format '
+            print(f'Exported {subtype_folder.name} mesh {textured_mesh_path.stem} with texture in .vtp format '
                   f'at {str(textured_mesh_path)}.\n')
 
 
