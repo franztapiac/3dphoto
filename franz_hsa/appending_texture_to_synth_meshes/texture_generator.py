@@ -1,5 +1,6 @@
 import h5py
-import numpy
+import numpy as np
+import os
 from pathlib import Path
 import pyvista as pv
 import vtk
@@ -12,12 +13,13 @@ import vtk
 
 # The application of texture was kindly provided
 
-def write_shape_texture_vtp(points,cells,texture,name):
+
+def write_shape_texture_vtp(points, cells, texture, name):
 
     # Define points
     vtk_points = vtk.vtkPoints()
     for pt in points:
-        vtk_points.InsertNextPoint(pt[0],pt[1],pt[2])
+        vtk_points.InsertNextPoint(pt[0], pt[1], pt[2])
 
     # Define cells
     vtk_cells = vtk.vtkCellArray()
@@ -49,51 +51,96 @@ def write_shape_texture_vtp(points,cells,texture,name):
     ply_writer.Write()
 
 
-def load_mesh(mesh_file_path):
+def get_mesh_data(mesh_file_path):
+    """
+    Reads a mesh and extracts with point and cell data.
+    :param mesh_file_path: A Path object to a mesh in .ply format.
+    :return: The mesh points and cell data.
+    """
+
     mesh_ply = pv.read(str(mesh_file_path.absolute()))
-    points = numpy.asarray(mesh_ply.points)
+
+    points = np.asarray(mesh_ply.points)
+
     n_cells = mesh_ply.n_cells
     cells = []
     for cell_index in range(n_cells):
         cells.append(mesh_ply.cell_point_ids(cell_index))
-    cells = numpy.asarray(cells)
+    cells = np.asarray(cells)
 
     return points, cells
 
+
+def load_texture_model(tex_model_path):
+    """
+    Reads the texture model and returns its mean and pca parameters.
+    :param tex_model_path: a Path object to the texture model in .h5 format.
+    """
+
+    texture_model = h5py.File(tex_model_path, 'r')
+    texture_mean = np.array(texture_model['model']['mean'])
+    texture_pcs = np.array(texture_model['model']['pcaBasis'])
+    texture_var = np.array(texture_model['model']['pcaVariance'])
+
+    return texture_mean, texture_pcs, texture_var
+
+
+def generate_mesh_texture(texture_mean, texture_pcs, texture_var):
+    """
+    Generates a unique texture for a mesh.
+    :param texture_mean: A numpy array (1 x 135,243) for the mean texture object.
+    :param texture_pcs: A numpy array (50 x 135,243) for the principal component basis of varying textures.
+    :param texture_var: A numpy array (1 x 50) for the texture variability.
+    :return: A numpy array (45,081 x 3) with texture data for a 45,081-point mesh.
+    """
+    var_weighting = np.random.normal(loc=0.2, scale=0.5, size=(50,))
+    texture_to_process = texture_mean + texture_var ** 0.5 * var_weighting @ texture_pcs
+
+    mesh_texture = np.array(texture_to_process).reshape((-1, 3)) * 255
+    mesh_texture[mesh_texture > 255] = 255
+    mesh_texture[mesh_texture < 0] = 0
+
+    return mesh_texture
+
+
+def create_mesh_directory(tex_files_path, subtype_folder, mesh_path):
+    textured_mesh_path = tex_files_path / subtype_folder.name / (mesh_path.stem + '.vtp')
+    if not os.path.exists(textured_mesh_path.parent):
+        os.mkdir(textured_mesh_path.parent)
+
+    return textured_mesh_path
+
+
+def generate_textured_files(tex_model_path, untex_files_path, tex_files_path):
+    """
+    For each subtype mesh, reads it, appends a unique texture to it, and exports the mesh in .vtp format.
+    :param tex_model_path: a Path object to the texture model in .h5 format.
+    :param untex_files_path: a Path obj to the dir with subtype names as subdirs, where the .ply untextured meshes lie.
+    :param tex_files_path: a Path obj to the dir to export .vtp textured meshes within subtype subdirectories.
+    """
+
+    texture_mean, texture_pcs, texture_var = load_texture_model(tex_model_path)
+
+    for subtype_folder in untex_files_path.iterdir():
+
+        for mesh_path in subtype_folder.glob('*.ply'):
+
+            mesh_points, mesh_cells = get_mesh_data(mesh_path)
+            mesh_texture = generate_mesh_texture(texture_mean, texture_pcs, texture_var)
+            textured_mesh_path = create_mesh_directory(tex_files_path, subtype_folder, mesh_path)
+            write_shape_texture_vtp(mesh_points, mesh_cells, mesh_texture, str(textured_mesh_path.absolute()))
+            print('f')
+
+
 if __name__ == '__main__':
 
-    # For repeatability
-    numpy.random.seed(42)
+    texture_model_path = Path('./texture_model.h5')
 
-    # List keys:
-    # Model contains the statistical model
-    # Representer contains points and cells
-    cur_h5 = h5py.File("texture_model.h5",'r')
-    print(cur_h5.keys())
-    print(cur_h5['model'].keys())
-    print(cur_h5['representer'].keys())
-    # For the texture model, the 'representer' is just sample points and cells
-    # for stand-alone plotting
+    untextured_files_path = \
+        Path(r"C:\Users\franz\Documents\work\projects\arp\data\synthetic_data\synth_data_original_untextured")
 
-    mesh_path = Path('./inst_001.ply')
-    my_points, my_cells = load_mesh(mesh_path)
+    textured_files_path = \
+        Path(r"C:\Users\franz\Documents\work\projects\arp\data\synthetic_data\synth_data_original_textured")
 
-    # my_cells = numpy.array(cur_h5['representer']['cells']).transpose()
-    # my_points = numpy.array(cur_h5['representer']['points']).transpose()
-    my_texture = numpy.array(cur_h5['model']['mean']).reshape((-1,3)) * 255
-    print("Proof that texture is there")
-    print(my_texture)
-
-    # Random generation of a couple of textures
-    # This works analogly to a generation of shape samples
-    my_mu = numpy.array(cur_h5['model']['mean'])
-    my_pc = numpy.array(cur_h5['model']['pcaBasis'])
-    my_var = numpy.array(cur_h5['model']['pcaVariance'])
-
-    for i in range(1):
-        my_alpha = numpy.random.normal(loc=0.2,scale=0.5,size=(50,))
-        texture_observation = my_mu + my_var**0.5 * my_alpha @ my_pc
-        new_texture = numpy.array(texture_observation).reshape((-1,3)) * 255
-        new_texture[new_texture > 255] = 255
-        new_texture[new_texture < 0] = 0
-        write_shape_texture_vtp(my_points,my_cells,new_texture,f"out{i}.vtp")
+    generate_textured_files(tex_model_path=texture_model_path,
+                            untex_files_path=untextured_files_path, tex_files_path=textured_files_path)
