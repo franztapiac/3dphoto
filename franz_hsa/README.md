@@ -32,6 +32,10 @@ To run the script, define the three paths at the main call of the script.
 
 Within this folder, there are 3 scripts:
 
+### 1. ``create_reduced_landmark_ref.py``
+
+
+
 ### 1. ``hsa_calculator_synth_meshes.py``
 
 ### 2. ``hsa_calculator_patient_pre_n_post_op.py``

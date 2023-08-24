@@ -31,7 +31,7 @@ def PlaceLandmarks(image, crop=True, verbose = True, crop_percentage = 0.4):
     return landmarks, cropped_image
 
 
-def ComputeHSAandRiskScore(image, landmarks, age, sex, verbose = True):
+def ComputeHSAandRiskScore(image, landmarks, landmark_placement, age, sex, verbose = True):
     '''
     Inputs:
         image: vtk polydata of the 3D photogram
@@ -42,7 +42,7 @@ def ComputeHSAandRiskScore(image, landmarks, age, sex, verbose = True):
     #now, compute the HSA index and risk score!
     if verbose:
         print('Aligning image to template...')
-    output_mesh, transform = AlignPatientToTemplate(image, landmarks)
+    output_mesh, transform = AlignPatientToTemplate(image, landmarks, landmark_placement)
     if verbose:
         print('Generating spherical image...')
     spherical_image = GenerateSphericalMapOfData(output_mesh, transform)

@@ -1,4 +1,4 @@
-from __init__ import CLASSIFIER_DIR, MODEL_DIR, EURYON_CRANIALBASE_LANDMARKS_PATH, GLABELLA_CRANIALBASE_LANDMARKS_PATH
+from __init__ import CLASSIFIER_DIR, MODEL_DIR, EURYON_CRANIALBASE_LANDMARKS_PATH, REDUCED_CRANIALBASE_LANDMARKS_PATH, GLABELLA_CRANIALBASE_LANDMARKS_PATH
 import pandas as pd
 from tools.LandmarkingUtils import CutMeshWithCranialBaseLandmarks, vtkPolyDataToNumpy
 import tools.DataSetGraph as DataSet
@@ -300,7 +300,7 @@ def CreateMeshFromBinaryImage(binaryImage, insidePixelValue=1):
 
     return mesh
 
-def AlignPatientToTemplate(surface, landmarks):
+def AlignPatientToTemplate(surface, landmarks, landmark_placement):
 
     l = vtk.vtkPolyData()
     l.DeepCopy(landmarks)
@@ -311,9 +311,12 @@ def AlignPatientToTemplate(surface, landmarks):
     surface = l
 
     # generate target points from template
-    templateLandmarks_forRegisitration = DataSet.ReadPolyData(EURYON_CRANIALBASE_LANDMARKS_PATH)
+    if landmark_placement == 'manual':
+        templateLandmarks_forRegistration = DataSet.ReadPolyData(REDUCED_CRANIALBASE_LANDMARKS_PATH)
+    else:  # 'automatic'
+        templateLandmarks_forRegistration = DataSet.ReadPolyData(EURYON_CRANIALBASE_LANDMARKS_PATH)
     template_space_landmarks = DataSet.ReadPolyData(GLABELLA_CRANIALBASE_LANDMARKS_PATH)
-    transform = RegisterPatientToTemplate(landmarks, templateLandmarks_forRegisitration)
+    transform = RegisterPatientToTemplate(landmarks, templateLandmarks_forRegistration)
 
     template_space_photo = ApplyTransform(surface, transform)
 
@@ -726,5 +729,5 @@ def ComputeFromSphericalImage(coordsImage, age, sex, remove_scale = True):
 
 if __name__ == '__main__':
     templateLandmarks_forRegisitration = DataSet.ReadPolyData(EURYON_CRANIALBASE_LANDMARKS_PATH)
-    template_space_landmarks = DataSet.ReadPolyData(GLABELLA_CRANIALBASE_LANDMARKS_PATH)
+    template_space_landmark = DataSet.ReadPolyData(GLABELLA_CRANIALBASE_LANDMARKS_PATH)
     print('f')
