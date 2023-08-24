@@ -34,7 +34,20 @@ Within this folder, there are 3 scripts:
 
 ### 1. ``create_reduced_landmark_ref.py``
 
+This script loads the existing landmark reference with 27 landmarks, and
+looks for specifically defined landmarks and collects their point coordinates.
 
+The list of specifically defined landmarks MUST be ordered following this order:
+``["TRAGION_RIGHT","SELLION","TRAGION_LEFT","EURYON_RIGHT","EURYON_LEFT","FRONTOTEMPORALE_RIGHT","FRONTOTEMPORALE_LEFT","VERTEX","NASION","GLABELLA","OPISTHOCRANION","GNATHION","STOMION","ZYGION_RIGHT","ZYGION_LEFT","GONION_RIGHT","GONION_LEFT","SUBNASALE","ENDOCANTHION_RIGHT","ENDOCANTHION_LEFT","EXOCANTHION_RIGHT","EXOCANTHION_LEFT","ALAR_RIGHT","ALAR_LEFT","NASALE_TIP","SUBLABIALE","UPPER_LIP"]``
+This is the order that the 27 points in the landmark reference object follow.
+
+Thus, if we are interested to get the nasion, and left and right tragion, we 
+our list of specifically defined landmarks must be in the following order:
+``['TRAGION_RIGHT', 'TRAGION_LEFT', 'NASION']``, which follows the order of
+the 27 landmarks.
+
+After collecting the landmark coordinates of the landmarks of interest,
+we export the reduced landmark template object and defined it in ``__init__.py``.
 
 ### 1. ``hsa_calculator_synth_meshes.py``
 
