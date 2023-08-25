@@ -8,3 +8,11 @@
 /franz_hsa/hsa_calculation/hsa_calculator_patient_pre_n_post_op.py
 /franz_hsa/experiments/
 .idea/workspace.xml
+.idea/3dphoto.iml
+.idea/inspectionProfiles/profiles_settings.xml
+.idea/inspectionProfiles/Project_Default.xml
+.idea/misc.xml
+.idea/vcs.xml
+__pycache__/__init__.cpython-39.pyc
+__pycache__/Analyze3DPhotogram.cpython-39.pyc
+franz_hsa/landmark_prediction_evaluation/__pycache__/export_landmarks.cpython-39.pyc
