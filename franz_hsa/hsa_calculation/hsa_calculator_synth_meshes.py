@@ -55,18 +55,22 @@ def get_mesh_info(mesh_vtp_file_path):
     return mesh_subtype, mesh_id_num
 
 
-def place_landmarks_manually():
-    landmark_coords = [[-54.8302, 0.423142, -21.3009],  # Tragion right
-                       [53.0547, -5.48717, -21.5361],   # Tragion left
-                       [1.36976, 1.29766, 43.735]]      # Nasion
-    # coordinates from sagittal_inst_001_cp_paraview.vtp
+def place_landmarks_manually(mesh_vtp):
 
-    landmark_coords = np.asarray(landmark_coords)
+    right_trag_coords = np.array(mesh_vtp.GetPoint(4229))
+    left_trag_coords = np.array(mesh_vtp.GetPoint(7168))
+    nasion_coords = np.array(mesh_vtp.GetPoint(5944))
+
+    landmark_coords = np.vstack((right_trag_coords, left_trag_coords, nasion_coords))
+
+    # landmark_coords = [[-54.8302, 0.423142, -21.3009],  # Tragion right  # 3418
+    #                    [53.0547, -5.48717, -21.5361],   # Tragion left  # 7210
+    #                    [1.36976, 1.29766, 43.735]]      # Nasion  # 5942
 
     manual_landmarks = vtk.vtkPolyData()
     manual_landmarks.SetPoints(vtk.vtkPoints())
     for p in range(len(landmark_coords)):
-        p_coords = tuple(landmark_coords[p,:])
+        p_coords = tuple(landmark_coords[p, :])
         manual_landmarks.GetPoints().InsertNextPoint(*p_coords)
 
     landmark_names = ["TRAGION_RIGHT", "TRAGION_LEFT", "NASION"]  # must be defined in the right relative order
@@ -103,7 +107,7 @@ def calculate_hsa_scores(vtp_data_path, hsa_exec_params):
                                               crop_percentage=hsa_exec_params['crop_percentage'])
             else:  # 'manually'
                 print('Placing the landmarks by manual definition...')
-                landmarks = place_landmarks_manually()
+                landmarks = place_landmarks_manually(mesh)
 
             if hsa_exec_params['export_landmarks']:
                 crop_percentage = hsa_exec_params['crop_percentage']
