@@ -1,3 +1,4 @@
+gitPython
 numpy
 matplotlib
 openpyxl

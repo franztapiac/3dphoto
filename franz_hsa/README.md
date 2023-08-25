@@ -34,20 +34,38 @@ Within this folder, there are 3 scripts:
 
 ### 1. ``create_reduced_landmark_ref.py``
 
-This script loads the existing landmark reference with 27 landmarks, and
-looks for specifically defined landmarks and collects their point coordinates.
+This script loads the existing landmark reference with 27 landmarks, collects the 
+names and coordinates of the landmarks of interest, and exports a reduced landmarks
+polydata object with the names and coordinates of the landmarks of interest.
 
-The list of specifically defined landmarks MUST be ordered following this order:
+Note that the landmarks in the full or reduced template MUST follow this relative
+order:
 ``["TRAGION_RIGHT","SELLION","TRAGION_LEFT","EURYON_RIGHT","EURYON_LEFT","FRONTOTEMPORALE_RIGHT","FRONTOTEMPORALE_LEFT","VERTEX","NASION","GLABELLA","OPISTHOCRANION","GNATHION","STOMION","ZYGION_RIGHT","ZYGION_LEFT","GONION_RIGHT","GONION_LEFT","SUBNASALE","ENDOCANTHION_RIGHT","ENDOCANTHION_LEFT","EXOCANTHION_RIGHT","EXOCANTHION_LEFT","ALAR_RIGHT","ALAR_LEFT","NASALE_TIP","SUBLABIALE","UPPER_LIP"]``
-This is the order that the 27 points in the landmark reference object follow.
+This is the relative order that the 27 points in the landmark reference object follow, 
+and PlaceLandmarks() (within Analyse3DPhotogram.py) predicts a landmarks object with
+this order.
 
-Thus, if we are interested to get the nasion, and left and right tragion, we 
-our list of specifically defined landmarks must be in the following order:
-``['TRAGION_RIGHT', 'TRAGION_LEFT', 'NASION']``, which follows the order of
-the 27 landmarks.
+This order must be kept, as within the function RegisterPatientToTemplate()
+(in tools/PhotoAnalysisTools.py), the (x, y, z) coordinates of each landmark 
+are collected from both the predicted and template landmark object, one landmark 
+at a time. Thus, a pair collected (x, y, z) coordinates must correspond to the same
+landmark. These collected landmark coordinates are then used to register the patient sample
+to the template.
 
-After collecting the landmark coordinates of the landmarks of interest,
-we export the reduced landmark template object and defined it in ``__init__.py``.
+Thus, if we are interested to get the nasion, and left and right tragion, 
+we must reduce the template landmarks with the relative order that these landmarks
+originally appear with. This is ensured by the get_reduced_landmarks_n_coords() function
+of this script herein.
+
+For example, if we request for the landmarks
+``['NASION', 'TRAGION_LEFT', 'TRAGION_RIGHT']``, we get the following output:
+
+![Landmark reduction example](../diagrams/landmark_reduction.png)
+
+After creating a reduced landmarks template, it must be defined in ``__init__.py`` 
+for use.
+
+
 
 ### 1. ``hsa_calculator_synth_meshes.py``
 
