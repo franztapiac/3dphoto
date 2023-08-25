@@ -14,23 +14,27 @@ repo_dir_path = Path(repo_root_str_path)
 full_landmarks_path = repo_dir_path / 'data/landmarks_full_templatespace.vtp'
 
 
-def load_full_template():
+def load_n_display_template(landmark_template_path: Path):
     """
-    Loads the full landmark template from its globally defined path.
+    Loads a landmark template from its path.
+
+    Parameters
+    ----------
+    landmark_template_path  the Path object to a landmark template.
 
     Returns
     -------
-    The full landmark template in PolyData and summarised dictionary with format { 'landmark name': (x, y, z) coords }.
+    The landmark template in PolyData and summarised dictionary with format { 'landmark name': (x, y, z) coords }.
     """
 
-    full_landmarks_polydata = ReadPolyData(str(full_landmarks_path.absolute()))
+    full_landmarks_polydata = ReadPolyData(str(landmark_template_path.absolute()))
 
     full_landmarks_dict = dict()
-    print('\nThe landmarks in the full template are ordered as:')
+    print('\nThe landmarks in the template are ordered as:')
     for landmark_index in range(full_landmarks_polydata.GetNumberOfPoints()):
         landmark_name = full_landmarks_polydata.GetPointData().GetAbstractArray(1).GetValue(landmark_index)
-        print(f'{landmark_index}: {landmark_name}')
         landmark_coords = full_landmarks_polydata.GetPoint(landmark_index)
+        print(f'{landmark_index}: {landmark_name}, with coordinates {landmark_coords}.')
         full_landmarks_dict[landmark_name] = landmark_coords
 
     return full_landmarks_polydata, full_landmarks_dict
@@ -153,7 +157,8 @@ def export_reduced_landmarks(reduced_landmarks_polydata, unique_name=False):
 
     if unique_name:
         reduction_date = datetime.date.today().strftime("%m%d")
-        reduced_template_landmarks_path = full_landmarks_path.parent / f'{reduction_date}_landmarks_reduced_templatespace.vtp'
+        reduced_template_landmarks_path = full_landmarks_path.parent / f'{reduction_date}_landmarks_' \
+                                                                       f'reduced_templatespace.vtp'
     else:
         reduced_template_landmarks_path = full_landmarks_path.parent / 'landmarks_reduced_templatespace.vtp'
 
@@ -171,7 +176,7 @@ def generate_reduced_landmarks_template(landmarks_of_interest, unique_name):
 
     """
 
-    full_landmarks_polydata, full_landmarks_n_coords = load_full_template()
+    full_landmarks_polydata, full_landmarks_n_coords = load_n_display_template(full_landmarks_path)
     reduced_landmarks_n_coords = get_reduced_landmarks_n_coords(full_landmarks_n_coords=full_landmarks_n_coords,
                                                                 landmarks_of_int=landmarks_of_interest)
     reduced_landmarks_polydata = create_reduced_landmarks_polydata(reduced_landmarks_n_coords)
@@ -180,5 +185,11 @@ def generate_reduced_landmarks_template(landmarks_of_interest, unique_name):
 
 
 if __name__ == '__main__':
-    my_landmarks = ['NASION', 'TRAGION_LEFT', 'TRAGION_RIGHT']  # use the landmark names, can be in any order
-    generate_reduced_landmarks_template(landmarks_of_interest=my_landmarks, unique_name=True)
+    # Generate a reduced landmarks template
+    # my_landmarks = ['NASION', 'TRAGION_LEFT', 'TRAGION_RIGHT']  # use the landmark names, can be in any order
+    # generate_reduced_landmarks_template(landmarks_of_interest=my_landmarks, unique_name=True)
+
+    # Visualise the details of your landmark template
+    reduced_landmark_path = repo_dir_path / 'data/landmarks_reduced_templatespace.vtp'
+    _, _ = load_n_display_template(reduced_landmark_path)
+
