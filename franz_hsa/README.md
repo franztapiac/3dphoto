@@ -64,7 +64,7 @@ For example, if we request for the landmarks
 
 After creating a reduced landmark template, we can check it:
 
-![Checking landmark reduction](landmark_reduction_check.png)
+![Checking landmark reduction](../diagrams/landmark_reduction_check.png)
 
 Finally, to use the reduced landmark template, it must be defined in ``__init__.py``.
 
