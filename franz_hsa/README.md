@@ -3,7 +3,17 @@ Franz A. Tapia Chaca
 
 franz.tapia-chaca@outlook.com
 
-## <u>Writing texture onto .vtp synthetic meshes</u>
+## <u>Content</u>
+Franz's work with the HSA index spanned 4 categories:
+1. Appending RGB texture to synthetic meshes
+2. Calculating the HSA on synthetic and patient meshes
+3. Evaluating the landmarking prediction
+4. Converting mesh files from .ply to .vtp format
+
+Each category has its own subdirectory, and how the corresponding scripts work is 
+explained below.
+
+## <u>A) Appending RGB texture to synthetic meshes</u>
 
 Within this folder, there is 1 script:
 
