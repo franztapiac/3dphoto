@@ -30,7 +30,8 @@ def load_n_display_template(landmark_template_path: Path):
     full_landmarks_polydata = ReadPolyData(str(landmark_template_path.absolute()))
 
     full_landmarks_dict = dict()
-    print('\nThe landmarks in the template are ordered as:')
+    print(f'\nYou loaded the landmark template file {landmark_template_path.name}.')
+    print('The landmarks in the template are ordered as:')
     for landmark_index in range(full_landmarks_polydata.GetNumberOfPoints()):
         landmark_name = full_landmarks_polydata.GetPointData().GetAbstractArray(1).GetValue(landmark_index)
         landmark_coords = full_landmarks_polydata.GetPoint(landmark_index)

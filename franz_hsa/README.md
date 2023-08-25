@@ -62,8 +62,11 @@ For example, if we request for the landmarks
 
 ![Landmark reduction example](../diagrams/landmark_reduction.png)
 
-After creating a reduced landmarks template, it must be defined in ``__init__.py`` 
-for use.
+After creating a reduced landmark template, we can check it:
+
+![Checking landmark reduction](landmark_reduction_check.png)
+
+Finally, to use the reduced landmark template, it must be defined in ``__init__.py``.
 
 
 
