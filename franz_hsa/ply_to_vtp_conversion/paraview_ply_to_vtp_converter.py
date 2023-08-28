@@ -3,18 +3,20 @@ from pathlib import Path
 paraview.simple._DisableFirstRenderCameraReset()
 
 """
-Define your directories to the .ply and .vtp data directories here.
+Define these three yourself. It also appears that making a '__main__' does not work. 
 """
+ply_data_path = Path(
+    r"C:\Users\franz\Documents\work\projects\arp\data\synthetic_data\synthetic_data_original_untextured_unclipped_ply")
+vtp_data_path = Path(
+    r"C:\Users\franz\Documents\work\projects\arp\data\synthetic_data\synthetic_data_original_untextured_unclipped_vtp_paraview")
+file_ext = '.ply'
 
-ply_data_path = Path("C:\\Users\\franz\\Documents\\work\\projects\\arp\\data\\synthetic_data\\synth_data_unclipped_ply")
-vtp_data_path = Path("C:\\Users\\franz\\Documents\\work\\projects\\arp\\data\\synthetic_data\\synth_data_unclipped_vtp_paraview")
 
 """
-Next, iterate through each subtype folder in the .ply directory. 
+For each subtype folder in ply_data_path, iterate.
 """
-
 for subtype_folder in ply_data_path.iterdir():                  # for each subtype
-    for mesh_file_path in subtype_folder.glob('*_cp.ply'):          # for each mesh
+    for mesh_file_path in subtype_folder.glob(f'*{file_ext}'):          # for each mesh
 
         """
         For each mesh for each subtype, get mesh information and load the mesh.
