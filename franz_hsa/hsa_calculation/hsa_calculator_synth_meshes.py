@@ -31,11 +31,10 @@ def export_to_excel(hsa_indices, output_path, hsa_exec_params):
     with pd.ExcelWriter(str(output_path.absolute())) as writer:
         for i, subtype in enumerate(list(hsa_indices.keys())):
             print(f'Exporting {subtype}...')
-
             # Generating the dataframe from the dictionary
-            size = len(hsa_indices.keys())
             df = pd.DataFrame.from_dict(hsa_indices[subtype], orient='index', columns=['HSA index'])
-            df.to_excel(writer, sheet_name='Sheet1', startcol=i*(size+2), startrow=1, index=True)
+            # Write the dataframe with subtype name as header
+            df.to_excel(writer, sheet_name='Sheet1', startcol=i*3, startrow=1, index=True, header=[subtype])
 
 
 def get_mesh_info(mesh_vtp_file_path, file_ending):
@@ -193,8 +192,8 @@ def get_hsa_or_landmarks(hsa_exp_index):
 if __name__ == '__main__':
     repo_root_path = Path(repo_root_str_path)
     hsa_exec_params_db_path = repo_root_path / r"franz_hsa\hsa_calculation\hsa_execution_parameters.xlsx"
-    only_use_first_n_samples = True
-    sample_n_size = 2
+    only_use_first_n_samples = False
+    sample_n_size = 1
 
     # Change this to a directory to storage the hsa results in
     dir_to_store_hsa_results = Path(

@@ -40,7 +40,7 @@ To run the script, define the three paths at the main call of the script.
 
 ## <u>HSA calculation</u>
 
-Within this folder, there are 3 scripts:
+Within this folder, there are 3 scripts, and one Excel file:
 
 ### 1. ``create_reduced_landmark_ref.py``
 
@@ -78,11 +78,46 @@ After creating a reduced landmark template, we can check it:
 
 Finally, to use the reduced landmark template, it must be defined in ``__init__.py``.
 
+### ``hsa_execution_parameters.xlsx``
+This Excel file contains a set of defined parameters to execute within 
+``hsa_calculator_synth_meshes.py``. 
+
+<u>Be sure NOT TO delete or change any rows!</u>
+While these parameters are also saved with the exported .hsa file, they are only 
+saved if HSA files are exported (currently, 28 Aug 2023), not if only landmarks
+are exported. Thus, this document serves as a log of HSA executions for either 
+landmark exporting or hsa prediction with predicted or automatic landmarks. Also, 
+if you edit one exp_data_path value, that row won't be functional on someone else's
+directory. If you don't want to show your directory on this publicly shared Excel file
+(through GitHub), delete the exp_data_path value before committing.
+
+The contents of the Excel file are as follows. Note that within 
+``hsa_calculator_synth_meshes.py``, the Excel files is turned into a dict. 
+Thus, the resulting keys are:
+1. hsa_exp_index: an integer ID for the HSA experiment. This is a required input in 
+__main__ of ``hsa_calculator_synth_meshes.py``.
+2. data_type
+3. sub_data_type
+4. with_texture
+5. exp_data_path
+6. file_ending
+7. age
+8. sex
+9. crop
+10. crop_percentage
+11. landmark_placement
+12. manual_landmarks
+13. export_landmarks
+14. calculate_hsa
+15. verbose
+
 
 
 ### 1. ``hsa_calculator_synth_meshes.py``
 
 ### 2. ``hsa_calculator_patient_pre_n_post_op.py``
+
+
 
 ### 3. ``run_various_crop_percentages.py``
 
