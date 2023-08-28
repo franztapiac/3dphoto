@@ -20,6 +20,7 @@ random.seed(0)
 
 
 def export_to_excel(hsa_indices, output_path, hsa_exec_params):
+    # hsa index file should storage execution parameters, as well as subtype names
     """
     Exports the HSA indices for meshes of different subtypes.
     :param hsa_indices: a dictionary with keys as subtypes, inner keys as mesh id numbers, and HSA indices as values.
@@ -37,14 +38,18 @@ def export_to_excel(hsa_indices, output_path, hsa_exec_params):
             df.to_excel(writer, sheet_name='Sheet1', startcol=i*(size+2), startrow=1, index=True)
 
 
-def get_mesh_info(mesh_vtp_file_path):
+def get_mesh_info(mesh_vtp_file_path, file_ending):
     """
     Return the subtype and id number of a mesh from a Path object.
     :param mesh_vtp_file_path: a Path object of a .vtp mesh file.
+    :param file_ending: the final characters of the file name, e.g. '_cp.vtp' or '.vtp'
     :return: the mesh subtype and id number.
     """
 
-    pattern = r'^(.*?)_inst_(\d{3})_cp$'
+    if '_cp' in file_ending:
+        pattern = r'^(.*?)_inst_(\d{3})_cp$'
+    else:
+        pattern = r'^(.*?)_inst_(\d{3})$'
     match = re.match(pattern, mesh_vtp_file_path.stem)
     mesh_subtype = match.group(1)
     mesh_id_num = int(match.group(2))
@@ -103,9 +108,13 @@ def place_landmarks_n_measure_hsa(vtp_data_path, hsa_exec_params):
         file_ending = hsa_exec_params['file_ending']
         for mesh_vtp_file_path in subtype_folder.glob(f'*{file_ending}'):
 
+            mesh_subtype, mesh_id_num = get_mesh_info(mesh_vtp_file_path, file_ending)  # files must bed named subtype1_control...
+
+            if only_use_first_n_samples and (mesh_id_num > sample_n_size):
+                break
             # Load mesh and get its info
             mesh = ReadPolyData(str(mesh_vtp_file_path))
-            mesh_subtype, mesh_id_num = get_mesh_info(mesh_vtp_file_path)  # files must bed named subtype1_control...
+
             print(f'\nWorking on {mesh_subtype} case #{mesh_id_num}...')
 
             landmark_placement = hsa_exec_params['landmark_placement']
@@ -172,19 +181,20 @@ def get_hsa_or_landmarks(hsa_exp_index):
 
     hsa_exec_params = load_hsa_exec_parameters(params_db_path=hsa_exec_params_db_path, hsa_exp_index=hsa_exp_index)
 
-    data_path = hsa_exec_params['exp_data_path']
+    data_path = Path(hsa_exec_params['exp_data_path'])
 
     hsa_scores = place_landmarks_n_measure_hsa(vtp_data_path=data_path, hsa_exec_params=hsa_exec_params)
 
     if hsa_exec_params['calculate_hsa']:
         hsa_score_storage_path = define_hsa_score_storage_path(hsa_exec_params)
         export_to_excel(hsa_indices=hsa_scores, output_path=hsa_score_storage_path, hsa_exec_params=hsa_exec_params)
-        # hsa index file should storage execution parameters, as well as subtype names
 
 
 if __name__ == '__main__':
     repo_root_path = Path(repo_root_str_path)
     hsa_exec_params_db_path = repo_root_path / r"franz_hsa\hsa_calculation\hsa_execution_parameters.xlsx"
+    only_use_first_n_samples = True
+    sample_n_size = 2
 
     # Change this to a directory to storage the hsa results in
     dir_to_store_hsa_results = Path(
