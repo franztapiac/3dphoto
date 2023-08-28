@@ -136,6 +136,14 @@ Then click: File / Run to execute the script.
 ### ``ply_to_vtp_converter.py``
 
 
+## Synthetic data processing
+
+### ``append_subtype_to_filename.py``
+![Append subtype to filename](../diagrams/append_subtype_to_filename.png)
+
+See docstring in code for explanation.
+
+
 ## Not a folder, others:
 
 
