@@ -193,7 +193,7 @@ def get_hsa_or_landmarks(hsa_exp_index):
 if __name__ == '__main__':
     repo_root_path = Path(repo_root_str_path)
     hsa_exec_params_db_path = repo_root_path / r"franz_hsa\hsa_calculation\hsa_execution_parameters.xlsx"
-    only_use_first_n_samples = False
+    only_use_first_n_samples = True
     sample_n_size = 2
 
     # Change this to a directory to storage the hsa results in
