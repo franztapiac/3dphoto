@@ -144,7 +144,7 @@ def place_landmarks_n_measure_hsa(vtp_data_path, hsa_exec_params):
                 print(f'HSA index for {mesh_subtype} mesh #{mesh_id_num}: {hsa_index:0.2f}')
                 hsa_indices[mesh_subtype][mesh_id_num] = hsa_index
             else:
-                return None
+                return None, None
             toc = time.time() - tic
             print(f'Working on {mesh_subtype} case #{mesh_id_num} took {toc:.0f} seconds.')
             times[mesh_subtype][mesh_id_num] = toc
@@ -185,10 +185,8 @@ def load_hsa_exec_parameters(params_db_path, hsa_exp_index):
 def get_hsa_or_landmarks(hsa_exp_index):
 
     hsa_exec_params = load_hsa_exec_parameters(params_db_path=hsa_exec_params_db_path, hsa_exp_index=hsa_exp_index)
-    # correct
 
     data_path = Path(hsa_exec_params['exp_data_path'])
-    # correct
 
     hsa_scores, times = place_landmarks_n_measure_hsa(vtp_data_path=data_path, hsa_exec_params=hsa_exec_params)
 
@@ -202,13 +200,12 @@ def get_hsa_or_landmarks(hsa_exp_index):
 if __name__ == '__main__':
     repo_root_path = Path(repo_root_str_path)  # correct
     hsa_exec_params_db_path = repo_root_path / r"franz_hsa\hsa_calculation\hsa_execution_parameters.xlsx"  # correct
-    only_use_first_n_samples = False  # correct
-    sample_n_size = 1  # correct
+    only_use_first_n_samples = False  # TODO: add this and the next variable to hsa_execution_parameters
+    sample_n_size = 1
 
     # Change this to a directory to storage the hsa results in
     dir_to_store_hsa_results = Path(
         r"C:\Users\franz\Documents\work\projects\arp\quantification-methods\tareq\kde_classifier\KDE_shape_classifier\experiments")
-    # correct
 
-    hsa_experiment_index = 3  # correct, change this to the right index
+    hsa_experiment_index = 5
     get_hsa_or_landmarks(hsa_experiment_index)  # good

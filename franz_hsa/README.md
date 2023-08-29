@@ -100,7 +100,9 @@ __main__ of ``hsa_calculator_synth_meshes.py``.
 3. sub_data_type
 4. with_texture
 5. exp_data_path
-6. file_ending
+6. file_ending: a string for the rest of the filename (including extension) after 'subtype_inst_abc'.
+Thus, if the filename is control_inst_001_cp.vtp, then file_ending is '_cp.ply', and for 
+control_inst_001.vtp, the file_ending is '.vtp'.
 7. age
 8. sex
 9. crop
