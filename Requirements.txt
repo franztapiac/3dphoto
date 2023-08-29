@@ -1,4 +1,5 @@
 gitPython
+h5py
 numpy
 matplotlib
 openpyxl

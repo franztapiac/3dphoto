@@ -34,7 +34,7 @@ def create_vtp_mesh(mesh_points, mesh_cells):
 
     vtk_points = vtk.vtkPoints()
     for point in mesh_points:
-        vtk_points.InsertNextPoint(point[0], point[1], point[2])
+        vtk_points.InsertNextPoint(*point)
 
     vtk_cells = vtk.vtkCellArray()
     for cell in mesh_cells:
@@ -84,6 +84,7 @@ def get_mesh_data(mesh_file_path):
     cells = []
     for cell_index in range(n_cells):
         cells.append(mesh_ply.cell_point_ids(cell_index))
+        # TODO: PyVistaDeprecationWarning: `cell_point_ids` is deprecated. Use `get_cell(i).point_ids` instead
     cells = np.asarray(cells)
 
     return points, cells
@@ -105,13 +106,13 @@ def load_texture_model(tex_model_path):
 
 def generate_mesh_texture(tex_mean, tex_pcs, tex_var):
     """
-    Generates a unique texture for a 45,081-point mesh.
-    :param tex_mean: A numpy array (1 x 135,243) for the mean texture object.
-    :param tex_pcs: A numpy array (50 x 135,243) for the principal component basis of varying textures.
-    :param tex_var: A numpy array (1 x 50) for the texture variability.
-    :return: A numpy array (45,081 x 3) with texture data for a 45,081-point mesh.
+    Generates a unique texture for a 13151 mesh.
+    :param tex_mean: A numpy array (1 x 39453) for the mean texture object.
+    :param tex_pcs: A numpy array (100 x 39453) for the principal component basis of varying textures.
+    :param tex_var: A numpy array (1 x 100) for the texture variability.
+    :return: A numpy array (39453 x 3) with texture data for a 39453-point mesh.
     """
-    var_weighting = np.random.normal(loc=0.2, scale=0.5, size=(50,))
+    var_weighting = np.random.normal(loc=0.2, scale=0.5, size=(100,))
     texture_to_process = tex_mean + tex_var ** 0.5 * var_weighting @ tex_pcs
 
     mesh_texture = np.array(texture_to_process).reshape((-1, 3)) * 255
@@ -130,28 +131,31 @@ def create_mesh_directory(tex_files_path, subtype_name, mesh_name):
     :return: a Path object for the exporting mesh in .vtp format.
 
     """
+    if not os.path.exists(tex_files_path):
+        os.mkdir(tex_files_path)
+
+    if not os.path.exists(tex_files_path/subtype_name):
+        os.mkdir(tex_files_path/subtype_name)
+
     if subtype_name in mesh_name:
         textured_mesh_path = tex_files_path / subtype_name / f'{mesh_name}.vtp'
     else:
         textured_mesh_path = tex_files_path / subtype_name / f'{subtype_name}_{mesh_name}.vtp'
 
-    if not os.path.exists(textured_mesh_path.parent):
-        os.mkdir(textured_mesh_path.parent)
-
     return textured_mesh_path
 
 
-def generate_textured_files(tex_model_path, untex_files_path, tex_files_path):
+def generate_textured_files(tex_model_path, untex_ply_files_path, tex_files_path):
     """
     For each subtype mesh, reads it, appends a unique texture to it, and exports the mesh in .vtp format.
     :param tex_model_path: a Path object to the texture model in .h5 format.
-    :param untex_files_path: a Path obj to the dir with subtype names as subdirs, where the .ply untextured meshes lie.
+    :param untex_ply_files_path: a Path obj to the dir with subtype names as subdirs, where the .ply untextured meshes lie.
     :param tex_files_path: a Path obj to the dir to export .vtp textured meshes within subtype subdirectories.
     """
 
     texture_mean, texture_pcs, texture_var = load_texture_model(tex_model_path)
 
-    for subtype_folder in untex_files_path.iterdir():
+    for subtype_folder in untex_ply_files_path.iterdir():
         for mesh_path in subtype_folder.glob('*.ply'):
 
             print(f'Loaded {subtype_folder.name} mesh {mesh_path.stem} in .ply format.')
@@ -172,13 +176,13 @@ def generate_textured_files(tex_model_path, untex_files_path, tex_files_path):
 
 if __name__ == '__main__':
 
-    texture_model_path = Path('./texture_model.h5')
+    texture_model_path = Path('./texture_model_13151_pts.h5')
 
-    untextured_files_path = \
-        Path(r"C:\Users\franz\Documents\work\projects\arp\data\synthetic_data\synth_data_original_untextured")
+    untextured_ply_format_files_path = \
+        Path(r"C:\Users\franz\Documents\work\projects\arp\data\synthetic_data\synthetic_data_original_untextured_unclipped_ply")
 
     textured_files_path = \
-        Path(r"C:\Users\franz\Documents\work\projects\arp\data\synthetic_data\synth_data_original_textured")
+        Path(r"C:\Users\franz\Documents\work\projects\arp\data\synthetic_data\synthetic_data_original_textured_unclipped_vtp_paraview")
 
-    generate_textured_files(tex_model_path=texture_model_path,
-                            untex_files_path=untextured_files_path, tex_files_path=textured_files_path)
+    generate_textured_files(tex_model_path=texture_model_path, untex_ply_files_path=untextured_ply_format_files_path,
+                            tex_files_path=textured_files_path)
