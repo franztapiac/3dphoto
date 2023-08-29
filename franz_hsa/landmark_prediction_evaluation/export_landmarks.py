@@ -30,8 +30,9 @@ def export_landmarks(landmarks, mesh_file_path: Path, landmark_def_details='', )
     landmark_coordinates = get_landmark_coordinates(landmarks)
 
     landmark_ply = pv.PolyData(landmark_coordinates)
-    landmark_ply_path = mesh_file_path.parent / ('predicted_landmarks_' + landmark_def_details) / (mesh_file_path.stem + '_landmarks.ply')
+    landmark_ply_path = mesh_file_path.parent / ('predicted_landmarks_' + landmark_def_details) / (mesh_file_path.stem +
+                                                                                                   '_landmarks.ply')
     if not os.path.exists(landmark_ply_path.parent):
         os.makedirs(landmark_ply_path.parent)
-    print(f'Exporting the landmarks to {str(landmark_ply_path.absolute())}')
+    print(f'Exporting the landmarks to {str(landmark_ply_path.absolute())}.')
     landmark_ply.save(str(landmark_ply_path))

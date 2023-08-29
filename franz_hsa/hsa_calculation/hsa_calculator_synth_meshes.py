@@ -13,6 +13,7 @@ import pandas as pd
 from pathlib import Path
 import random
 import re
+import time
 from tools.DataSetGraph import ReadPolyData
 from tools.LandmarkingUtils import AddArraysToLandmarks
 import vtk
@@ -47,7 +48,7 @@ def get_mesh_info(mesh_vtp_file_path, file_ending):
 
     if '_cp' in file_ending:
         pattern = r'^(.*?)_inst_(\d{3})_cp$'
-    else:
+    else:  # no '_cp.abc', just '.abc'
         pattern = r'^(.*?)_inst_(\d{3})$'
     match = re.match(pattern, mesh_vtp_file_path.stem)
     mesh_subtype = match.group(1)
@@ -58,7 +59,7 @@ def get_mesh_info(mesh_vtp_file_path, file_ending):
 
 def place_three_landmarks_manually(mesh_vtp, landmark_coordinates=None):
 
-    right_trag_coords = np.array(mesh_vtp.GetPoint(landmark_coordinates['TRAGION_RIGHT']))
+    right_trag_coords = np.array(mesh_vtp.GetPoint(landmark_coordinates['TRAGION_RIGHT']))  # gets coordinates of 3D pt
     left_trag_coords = np.array(mesh_vtp.GetPoint(landmark_coordinates['TRAGION_LEFT']))
     nasion_coords = np.array(mesh_vtp.GetPoint(landmark_coordinates['NASION']))
 
@@ -98,11 +99,13 @@ def place_landmarks_n_measure_hsa(vtp_data_path, hsa_exec_params):
     :return: a dictionary of HSA indices for each mesh of the subtypes in the .vtp data path.
     """
     hsa_indices = dict()
+    times = dict()
     verbose = hsa_exec_params['verbose']
 
     for subtype_folder in vtp_data_path.iterdir():
 
         hsa_indices[subtype_folder.name] = dict()
+        times[subtype_folder.name] = dict()
 
         file_ending = hsa_exec_params['file_ending']
         for mesh_vtp_file_path in subtype_folder.glob(f'*{file_ending}'):
@@ -111,18 +114,18 @@ def place_landmarks_n_measure_hsa(vtp_data_path, hsa_exec_params):
 
             if only_use_first_n_samples and (mesh_id_num > sample_n_size):
                 break
-            # Load mesh and get its info
+            # Load mesh
             mesh = ReadPolyData(str(mesh_vtp_file_path))
-
             print(f'\nWorking on {mesh_subtype} case #{mesh_id_num}...')
 
             landmark_placement = hsa_exec_params['landmark_placement']
-            if landmark_placement == 'automatically':
+            tic = time.time()
+            if landmark_placement == 'automatic':
                 print('Computing the landmarks by automatic prediction...')
                 # Place landmarks on mesh, compute its hsa index, and store
                 landmarks, _ = PlaceLandmarks(mesh, crop=hsa_exec_params['crop'], verbose=verbose,
                                               crop_percentage=hsa_exec_params['crop_percentage'])
-            else:  # 'manually'
+            else:  # 'manual'
                 print('Placing the landmarks by manual definition...')
                 coordinates = get_landmark_coords(hsa_exec_params)
                 landmarks = place_three_landmarks_manually(mesh_vtp=mesh, landmark_coordinates=coordinates)
@@ -130,7 +133,7 @@ def place_landmarks_n_measure_hsa(vtp_data_path, hsa_exec_params):
             if hsa_exec_params['export_landmarks']:
                 crop_percentage = hsa_exec_params['crop_percentage']
                 export_landmarks(landmarks, mesh_vtp_file_path, f'cropped_{crop_percentage}_'
-                                                                f'landmarks_placed_{landmark_placement}')
+                                                                f'{landmark_placement}_landmark_placement')
 
             if hsa_exec_params['calculate_hsa']:
                 print('Calculating the HSA index...')
@@ -142,8 +145,11 @@ def place_landmarks_n_measure_hsa(vtp_data_path, hsa_exec_params):
                 hsa_indices[mesh_subtype][mesh_id_num] = hsa_index
             else:
                 return None
+            toc = time.time() - tic
+            print(f'Working on {mesh_subtype} case #{mesh_id_num} took {toc:.0f} seconds.')
+            times[mesh_subtype][mesh_id_num] = toc
 
-    return hsa_indices
+    return hsa_indices, times
 
 
 def define_hsa_score_storage_path(hsa_execution_params):
@@ -179,25 +185,30 @@ def load_hsa_exec_parameters(params_db_path, hsa_exp_index):
 def get_hsa_or_landmarks(hsa_exp_index):
 
     hsa_exec_params = load_hsa_exec_parameters(params_db_path=hsa_exec_params_db_path, hsa_exp_index=hsa_exp_index)
+    # correct
 
     data_path = Path(hsa_exec_params['exp_data_path'])
+    # correct
 
-    hsa_scores = place_landmarks_n_measure_hsa(vtp_data_path=data_path, hsa_exec_params=hsa_exec_params)
+    hsa_scores, times = place_landmarks_n_measure_hsa(vtp_data_path=data_path, hsa_exec_params=hsa_exec_params)
 
     if hsa_exec_params['calculate_hsa']:
         hsa_score_storage_path = define_hsa_score_storage_path(hsa_exec_params)
         export_to_excel(hsa_indices=hsa_scores, output_path=hsa_score_storage_path, hsa_exec_params=hsa_exec_params)
+        times_path = hsa_score_storage_path.parent / (hsa_score_storage_path.stem + '_times.xlsx')
+        export_to_excel(hsa_indices=times, output_path=times_path, hsa_exec_params=hsa_exec_params)
 
 
 if __name__ == '__main__':
-    repo_root_path = Path(repo_root_str_path)
-    hsa_exec_params_db_path = repo_root_path / r"franz_hsa\hsa_calculation\hsa_execution_parameters.xlsx"
-    only_use_first_n_samples = False
-    sample_n_size = 1
+    repo_root_path = Path(repo_root_str_path)  # correct
+    hsa_exec_params_db_path = repo_root_path / r"franz_hsa\hsa_calculation\hsa_execution_parameters.xlsx"  # correct
+    only_use_first_n_samples = False  # correct
+    sample_n_size = 1  # correct
 
     # Change this to a directory to storage the hsa results in
     dir_to_store_hsa_results = Path(
         r"C:\Users\franz\Documents\work\projects\arp\quantification-methods\tareq\kde_classifier\KDE_shape_classifier\experiments")
+    # correct
 
-    hsa_experiment_index = 3  # change this to the right index
-    get_hsa_or_landmarks(hsa_experiment_index)
+    hsa_experiment_index = 3  # correct, change this to the right index
+    get_hsa_or_landmarks(hsa_experiment_index)  # good
