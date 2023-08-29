@@ -96,17 +96,22 @@ The contents of the Excel file are as follows. Note that within
 Thus, the resulting keys are:
 1. hsa_exp_index: an integer ID for the HSA experiment. This is a required input in 
 __main__ of ``hsa_calculator_synth_meshes.py``.
-2. data_type
-3. sub_data_type
-4. with_texture
-5. exp_data_path
+2. data_type: a string for 'patient' or 'synthetic' data.
+3. sub_data_type: a string. 'downsampled' (synthetic original data processed by Tareq) or 'original'
+   (the synthetic Version V2 data of [Schaufelberger](https://zenodo.org/record/6390158)) for
+synthetic data. 'sagittal', 'metopic', or 'pre_n_post_op' for patient data.
+4. with_texture: a bool for whether the data has texture or not.
+5. exp_data_path: an absolute path to the data directory within your terminal. This data directory
+must be a parent directory of subtype subdirectories, within which lie the meshes. See below
+   (Synthetic data processing: ``append_subtype_to_filname.py`` for how this parent directory
+ought to be structured).
 6. file_ending: a string for the rest of the filename (including extension) after 'subtype_inst_abc'.
 Thus, if the filename is control_inst_001_cp.vtp, then file_ending is '_cp.ply', and for 
 control_inst_001.vtp, the file_ending is '.vtp'.
-7. age
-8. sex
-9. crop
-10. crop_percentage
+7. age: the age of the patient represented by the mesh, in days.
+8. sex: a character for 'M' or 'F'.
+9. crop: a bool for whether to crop the mesh from the bottom.
+10. crop_percentage: a percentage amount with which to crop the mesh from the bottom. 
 11. landmark_placement
 12. manual_landmarks
 13. export_landmarks
