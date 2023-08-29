@@ -110,7 +110,7 @@ def place_landmarks_n_measure_hsa(vtp_data_path, hsa_exec_params):
         file_ending = hsa_exec_params['file_ending']
         for mesh_vtp_file_path in subtype_folder.glob(f'*{file_ending}'):
 
-            mesh_subtype, mesh_id_num = get_mesh_info(mesh_vtp_file_path, file_ending)  # files must bed named subtype1_control...
+            mesh_subtype, mesh_id_num = get_mesh_info(mesh_vtp_file_path, file_ending)  # files must be named subtype1_control...
 
             if only_use_first_n_samples and (mesh_id_num > sample_n_size):
                 break
@@ -143,8 +143,7 @@ def place_landmarks_n_measure_hsa(vtp_data_path, hsa_exec_params):
                                                       verbose=verbose)
                 print(f'HSA index for {mesh_subtype} mesh #{mesh_id_num}: {hsa_index:0.2f}')
                 hsa_indices[mesh_subtype][mesh_id_num] = hsa_index
-            else:
-                return None, None
+
             toc = time.time() - tic
             print(f'Working on {mesh_subtype} case #{mesh_id_num} took {toc:.0f} seconds.')
             times[mesh_subtype][mesh_id_num] = toc
@@ -198,14 +197,14 @@ def get_hsa_or_landmarks(hsa_exp_index):
 
 
 if __name__ == '__main__':
-    repo_root_path = Path(repo_root_str_path)  # correct
-    hsa_exec_params_db_path = repo_root_path / r"franz_hsa\hsa_calculation\hsa_execution_parameters.xlsx"  # correct
+    repo_root_path = Path(repo_root_str_path)
+    hsa_exec_params_db_path = repo_root_path / r"franz_hsa/landmark_pred_n_hsa_calc/hsa_execution_parameters.xlsx"
     only_use_first_n_samples = False  # TODO: add this and the next variable to hsa_execution_parameters
-    sample_n_size = 1
+    sample_n_size = 2
 
     # Change this to a directory to storage the hsa results in
     dir_to_store_hsa_results = Path(
         r"C:\Users\franz\Documents\work\projects\arp\quantification-methods\tareq\kde_classifier\KDE_shape_classifier\experiments")
 
     hsa_experiment_index = 5
-    get_hsa_or_landmarks(hsa_experiment_index)  # good
+    get_hsa_or_landmarks(hsa_experiment_index)
