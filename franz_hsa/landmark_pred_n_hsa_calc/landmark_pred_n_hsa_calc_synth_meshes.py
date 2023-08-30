@@ -203,8 +203,7 @@ if __name__ == '__main__':
     sample_n_size = 2
 
     # Change this to a directory to storage the hsa results in
-    dir_to_store_hsa_results = Path(
-        r"C:\Users\franz\Documents\work\projects\arp\quantification-methods\tareq\kde_classifier\KDE_shape_classifier\experiments")
+    dir_to_store_hsa_results = repo_root_path / r"franz_hsa/landmark_pred_n_hsa_calc/results"
 
-    hsa_experiment_index = 5
+    hsa_experiment_index = 8
     get_hsa_or_landmarks(hsa_experiment_index)
