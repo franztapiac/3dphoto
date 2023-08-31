@@ -134,10 +134,18 @@ def get_landmark_coordinates(mesh, landmarks_points_path):
     landmarks_df = pd.read_excel(landmarks_points_path)
     landmark_points = landmarks_df.set_index('landmark_name').to_dict()['point_id']
 
+    # Remove missing landmarks
+    landmarks_to_remove = []
+    for landmark in landmark_points.keys():
+        if np.isnan(landmark_points[landmark]):
+            landmarks_to_remove.append(landmark)
+    for landmark in landmarks_to_remove:
+        del landmark_points[landmark]
+
     # Get landmark (x,y,z) coordinates from the mesh
     landmark_coords_dict = dict()
     for landmark in landmark_points.keys():
-        landmark_pt_id = landmark_points[landmark]
+        landmark_pt_id = int(landmark_points[landmark])
         landmark_coords_dict[landmark] = np.array(mesh.points[landmark_pt_id])
 
     # Generate .ply landmarks file
@@ -158,7 +166,6 @@ def visualise_landmarks_per_model(model_name, visualise_control_meshes):
                                 'model_M_Aug01': Path('../synth_data/test_datasets/testdata_model_0108_metopicB.json'),
                                 'model_S_Aug01': Path('../synth_data/test_datasets/testdata_model_0108_sagittalB.json')}
 
-
     data_path = Path(r"C:\Users\franz\Documents\work\projects\arp\data\synthetic_data\synthetic_data_downsampled_untextured_unclipped_ply")
     pred_landmarks_path = Path(r"C:\Users\franz\Documents\work\projects\arp\data\synthetic_data\synthetic_data_downsampled_untextured_unclipped_vtp_python")
     file_w_meshes_paths = test_set_paths_per_model[model_name]
@@ -177,7 +184,7 @@ def visualise_manually_defined_landmarks(landmarks_pts_path, data_path, meshes_n
 
 
 if __name__ == '__main__':
-    use_case = 1
+    use_case = 2
 
     if use_case == 1:  # Visualise predicted landmarks
         # There are three model names: model_A_Aug01, model_M_Aug01 and model_S_Aug01
@@ -186,7 +193,7 @@ if __name__ == '__main__':
     else:  # Visualise manually defined landmarks
         landmarks_path = Path("./landmark_points.xlsx")
         synth_data_path = Path(r"C:\Users\franz\Documents\work\projects\arp\data\synthetic_data\synthetic_data_original_untextured_unclipped_ply")
-        n_meshes_per_subtype = 3
+        n_meshes_per_subtype = 2
         subtypes = ['control', 'metopic', 'sagittal']
         visualise_manually_defined_landmarks(landmarks_pts_path=landmarks_path, data_path=synth_data_path,
                                              meshes_num=n_meshes_per_subtype, subtypes_lst=subtypes)
