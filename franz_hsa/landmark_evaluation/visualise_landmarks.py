@@ -1,7 +1,7 @@
 import json
-
-import numpy.random
+import numpy as np
 from numpy import random
+import pandas as pd
 from pathlib import Path
 import pyvista as pv
 import re
@@ -19,35 +19,37 @@ the control meshes.
 """
 
 
-def create_pv_plotter(mesh_path, pred_landmarks_path=None, manual_landmarks=None):
+def create_pv_plotter(mesh_path, pred_landmarks_path=None, landmarks_pts_path=None):
     """
     Creates a PyVista plotter window showing one mesh with its manual or predicted landmarks.
     :param mesh_path: Path; to the mesh .ply file.
     :param pred_landmarks_path: Path; to the predicted landmarks .ply file.
-    :param manual_landmarks: PyVista object; landmark coordinates.
+    :param landmarks_pts_path: Path; to the landmarks points Excel file.
     """
 
     p = pv.Plotter()
-    p.add_mesh(pv.read(str(mesh_path)))
+    mesh = pv.read(str(mesh_path))
+    p.add_mesh(mesh)
     if pred_landmarks_path:
         landmark_coordinates = pv.read(str(pred_landmarks_path))
     else:  # assumes that manual_landmarks if given
-        landmark_coordinates = manual_landmarks
+        landmark_coordinates = get_landmark_coordinates(mesh=mesh, landmarks_points_path=landmarks_pts_path)
     p.add_points(landmark_coordinates, render_points_as_spheres=True, point_size=15, color='r')
     p.add_text('{}'.format(mesh_path.name), position='upper_right', color='k')
     p.view_xy()
     p.show()
 
 
-def visualise_landmarks_per_mesh(meshes_to_visualise, ply_synth_data_path, vis_control_meshes=True,
-                                 pred_landmarks_path=None, manual_landmarks=None):
+def visualise_landmarks_per_mesh(meshes_to_visualise, ply_synth_data_path, file_end, vis_control_meshes=True,
+                                 pred_landmarks_path=None, landmarks_pts_path=None):
     """
     Creates a PyVista Plotter visual of a mesh and its HSA-predicted landmarks.
     :param meshes_to_visualise: a dictionary with format {'subtypes': [mesh id numbers] }, for IDing a mesh to vis.
     :param ply_synth_data_path: Path; to the synthetic .ply format data.
+    :param file_end: string; ending characters of a file name (downsampled: '_cp.ply', original: '.ply')
     :param vis_control_meshes: a bool object for whether to visualise the control meshes with their landmarks.
     :param pred_landmarks_path: Path; to the predicted .ply landmarks.
-    :param manual_landmarks: PyVista mesh; manually defined landmarks.
+    :param landmarks_pts_path: Path; to the landmarks points Excel file.
     """
 
     if not vis_control_meshes:
@@ -59,11 +61,12 @@ def visualise_landmarks_per_mesh(meshes_to_visualise, ply_synth_data_path, vis_c
         mesh_id_nums = meshes_to_visualise[subtype]
 
         if pred_landmarks_path:
-            landmarks_coordinates_dir = pred_landmarks_path / subtype  # if ldnmks path is input
+            landmarks_coordinates_dir = pred_landmarks_path / subtype / 'predicted_landmarks_cropped_0_' \
+                                                                        'automatic_landmark_placement'
 
         for mesh_id_num in mesh_id_nums:
             zero_padded_id = str(mesh_id_num).zfill(3)
-            mesh_file_path = list(subtype_folder.glob(f'*{zero_padded_id}_cp.ply'))[0]
+            mesh_file_path = list(subtype_folder.glob(f'*{zero_padded_id}{file_end}'))[0]
 
             if pred_landmarks_path:
                 mesh_predicted_landmarks_path = list(landmarks_coordinates_dir.glob(f'*{zero_padded_id}_'
@@ -71,8 +74,8 @@ def visualise_landmarks_per_mesh(meshes_to_visualise, ply_synth_data_path, vis_c
 
                 create_pv_plotter(mesh_path=mesh_file_path, pred_landmarks_path=mesh_predicted_landmarks_path)
 
-            elif manual_landmarks:
-                create_pv_plotter(mesh_path=mesh_file_path, manual_landmarks=manual_landmarks)
+            elif landmarks_pts_path:
+                create_pv_plotter(mesh_path=mesh_file_path, landmarks_pts_path=landmarks_pts_path)
 
 
 def get_mesh_ids_randomly(quantity, subtypes_lst):
@@ -120,22 +123,28 @@ def get_mesh_ids_per_subtype(json_file_path):
     return mesh_ids_per_subtype
 
 
-def get_landmarks_object(landmarks_points_path):
+def get_landmark_coordinates(mesh, landmarks_points_path):
     """
     Generate a PyVista landmarks object from the landmark point information.
+    :param mesh: PyVista Ply PolyData; a non-clipped synthetic mesh.
     :param landmarks_points_path: Path; to an Excel file with points for each landmarking object.
     """
 
-    # read excel into pandas / dict
+    # Convert Excel into dict
+    landmarks_df = pd.read_excel(landmarks_points_path)
+    landmark_points = landmarks_df.set_index('landmark_name').to_dict()['point_id']
 
-    # convert into vtp
+    # Get landmark (x,y,z) coordinates from the mesh
+    landmark_coords_dict = dict()
+    for landmark in landmark_points.keys():
+        landmark_pt_id = landmark_points[landmark]
+        landmark_coords_dict[landmark] = np.array(mesh.points[landmark_pt_id])
 
-    # convert vtp to ply
-    # landmark_ply = pv.PolyData(landmark_coordinates)
+    # Generate .ply landmarks file
+    coords_lst = list(landmark_coords_dict.values())
+    landmark_coordinates = np.vstack(coords_lst)
 
-    # return ply
-    # TODO: convert landmarks object
-    return 1
+    return landmark_coordinates
 
 
 def visualise_landmarks_per_model(model_name, visualise_control_meshes):
@@ -149,21 +158,26 @@ def visualise_landmarks_per_model(model_name, visualise_control_meshes):
                                 'model_M_Aug01': Path('../synth_data/test_datasets/testdata_model_0108_metopicB.json'),
                                 'model_S_Aug01': Path('../synth_data/test_datasets/testdata_model_0108_sagittalB.json')}
 
+
+    data_path = Path(r"C:\Users\franz\Documents\work\projects\arp\data\synthetic_data\synthetic_data_downsampled_untextured_unclipped_ply")
+    pred_landmarks_path = Path(r"C:\Users\franz\Documents\work\projects\arp\data\synthetic_data\synthetic_data_downsampled_untextured_unclipped_vtp_python")
     file_w_meshes_paths = test_set_paths_per_model[model_name]
     mesh_ids_per_subtype = get_mesh_ids_per_subtype(json_file_path=file_w_meshes_paths)
     # TODO: Fix vis function so that this function still works
-    visualise_landmarks_per_mesh(meshes_to_visualise=mesh_ids_per_subtype, vis_control_meshes=visualise_control_meshes)
+    visualise_landmarks_per_mesh(meshes_to_visualise=mesh_ids_per_subtype, ply_synth_data_path=data_path,
+                                 file_end='_cp.ply', vis_control_meshes=visualise_control_meshes,
+                                 pred_landmarks_path=pred_landmarks_path)
 
 
 def visualise_manually_defined_landmarks(landmarks_pts_path, data_path, meshes_num, subtypes_lst):
-    landmarks = get_landmarks_object(landmarks_pts_path)
     mesh_ids_per_subtype = get_mesh_ids_randomly(meshes_num, subtypes_lst)
+    file_ending = '.ply'
     visualise_landmarks_per_mesh(meshes_to_visualise=mesh_ids_per_subtype, ply_synth_data_path=data_path,
-                                 manual_landmarks=landmarks)
+                                 file_end=file_ending, landmarks_pts_path=landmarks_pts_path)
 
 
 if __name__ == '__main__':
-    use_case = 2
+    use_case = 1
 
     if use_case == 1:  # Visualise predicted landmarks
         # There are three model names: model_A_Aug01, model_M_Aug01 and model_S_Aug01
