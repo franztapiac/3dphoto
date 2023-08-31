@@ -2,7 +2,7 @@ import argparse
 from tools.DataSetGraph import ReadPolyData, WritePolyData, LoadOBJFile
 from tools.LandmarkingUtils import RunInference
 from tools.PhotoAnalysisTools import AlignPatientToTemplate, GenerateSphericalMapOfData, ComputeFromSphericalImage
-from franz_hsa.landmark_prediction_evaluation.export_landmarks import export_landmarks
+from franz_hsa.landmark_evaluation.export_landmarks import export_landmarks
 from os import path
 from pathlib import Path
 

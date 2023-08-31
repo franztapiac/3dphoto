@@ -6,7 +6,7 @@ repo_root_str_path = Repo(current_file_str_path, search_parent_directories=True)
 sys.path.append(repo_root_str_path)
 from Analyze3DPhotogram import PlaceLandmarks, ComputeHSAandRiskScore
 import datetime
-from franz_hsa.landmark_prediction_evaluation.export_landmarks import export_landmarks
+from franz_hsa.landmark_evaluation.export_landmarks import export_landmarks
 import json
 import numpy as np
 import pandas as pd
@@ -205,5 +205,5 @@ if __name__ == '__main__':
     # Change this to a directory to storage the hsa results in
     dir_to_store_hsa_results = repo_root_path / r"franz_hsa/landmark_pred_n_hsa_calc/results"
 
-    hsa_experiment_index = 8
+    hsa_experiment_index = 6
     get_hsa_or_landmarks(hsa_experiment_index)
