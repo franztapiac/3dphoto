@@ -130,24 +130,32 @@ landmark prediction model.
 
 ### 3. ``run_various_crop_percentages.py``
 
-## <u>Landmark prediction evaluation</u>
+## <u>Landmark evaluation</u>
 
 Within this folder, there are 2 scripts:
 
 ### 1. ``export_landmarks.py``
 
+Holds functions for exporting a .vtp landmarks object as a .ply landmarks file.
+
 ### 2. ``visualise_landmarks.py``
+
+This script has two options, which can be accessed by ``use_case = 1`` or ``use_case = 2``, respectively.:
+1. Visualisation of landmarks predicted by Connor's landmark prediction.
 
 ![Example landmark visualisation](../diagrams/landmark_vis_example.png)
 
 Generates a window that displays meshes with landmarks. The meshes can be those from the test set of a KDE model.
 The landmarks can be those predicted with Elkhill's landmark prediction method.
 
-Three functions are used to generate this functionality:
-1. visualise_landmarks_per_mesh: creates the window displaying a mesh and its landmarks. Click 'X' for the next mesh. 
-2. get_mesh_ids_per_subtype: gets mesh subtype and id for all meshes in a test set file (file has paths to mesh files). 
-3. visualise_landmarks_per_model: receives user input for which model's meshes to display, and whether to display 
-the control meshes. 
+2. Visualisation of landmarks manually defined by point IDs from synthetic meshes.
+
+![Landmark annotation](../diagrams/landmark_annotation.png)
+
+
+
+
+
 
 
 ## <u>.ply to .vtp conversion</u>

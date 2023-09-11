@@ -170,7 +170,6 @@ def visualise_landmarks_per_model(model_name, visualise_control_meshes):
     pred_landmarks_path = Path(r"C:\Users\franz\Documents\work\projects\arp\data\synthetic_data\synthetic_data_downsampled_untextured_unclipped_vtp_python")
     file_w_meshes_paths = test_set_paths_per_model[model_name]
     mesh_ids_per_subtype = get_mesh_ids_per_subtype(json_file_path=file_w_meshes_paths)
-    # TODO: Fix vis function so that this function still works
     visualise_landmarks_per_mesh(meshes_to_visualise=mesh_ids_per_subtype, ply_synth_data_path=data_path,
                                  file_end='_cp.ply', vis_control_meshes=visualise_control_meshes,
                                  pred_landmarks_path=pred_landmarks_path)
@@ -185,13 +184,17 @@ def visualise_manually_defined_landmarks(landmarks_pts_path, data_path, meshes_n
 
 if __name__ == '__main__':
     use_case = 2
+    landmarks_option = 'reduced'
 
     if use_case == 1:  # Visualise predicted landmarks
         # There are three model names: model_A_Aug01, model_M_Aug01 and model_S_Aug01
         visualise_landmarks_per_model(model_name='model_A_Aug01', visualise_control_meshes=False)
 
     else:  # Visualise manually defined landmarks
-        landmarks_path = Path("./landmark_points.xlsx")
+        if landmarks_option == 'full':
+            landmarks_path = Path("./landmark_points_full.xlsx")
+        else:
+            landmarks_path = Path("./landmark_points_reduced.xlsx")
         synth_data_path = Path(r"C:\Users\franz\Documents\work\projects\arp\data\synthetic_data\synthetic_data_original_untextured_unclipped_ply")
         n_meshes_per_subtype = 2
         subtypes = ['control', 'metopic', 'sagittal']

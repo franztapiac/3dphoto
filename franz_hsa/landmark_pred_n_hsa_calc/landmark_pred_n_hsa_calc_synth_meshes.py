@@ -76,6 +76,36 @@ def place_three_landmarks_manually(mesh_vtp, landmark_coordinates=None):
     return landmarks_vtp
 
 
+def place_landmarks_manually(mesh_vtp, landmark_coordinates=None):
+
+    # Get landmark (x,y,z) coordinates from the mesh
+    landmark_coords_dict = dict()
+    for landmark in landmark_coordinates.keys():
+        landmark_pt_id = int(landmark_coordinates[landmark])
+        landmark_coords_dict[landmark] = np.array(mesh_vtp.GetPoint(landmark_pt_id))
+        # right_trag_coords = np.array(mesh_vtp.GetPoint(landmark_coordinates['TRAGION_RIGHT']))
+
+    coords_lst = list(landmark_coords_dict.values())
+    landmark_coords = np.vstack(coords_lst)
+    #
+    # right_trag_coords = np.array(mesh_vtp.GetPoint(landmark_coordinates['TRAGION_RIGHT']))  # gets coordinates of 3D pt
+    # left_trag_coords = np.array(mesh_vtp.GetPoint(landmark_coordinates['TRAGION_LEFT']))
+    # nasion_coords = np.array(mesh_vtp.GetPoint(landmark_coordinates['NASION']))
+    #
+    # landmark_coords = np.vstack((right_trag_coords, left_trag_coords, nasion_coords))
+
+    manual_landmarks = vtk.vtkPolyData()
+    manual_landmarks.SetPoints(vtk.vtkPoints())
+    for p in range(len(landmark_coords)):
+        p_coords = tuple(landmark_coords[p, :])
+        manual_landmarks.GetPoints().InsertNextPoint(*p_coords)
+
+    landmark_names = list(landmark_coordinates.keys())  # must be defined in the right relative order
+    landmarks_vtp = AddArraysToLandmarks(manual_landmarks, landmark_names)
+
+    return landmarks_vtp
+
+
 def get_landmark_coords(hsa_execution_parameters):
     """
     Convert the landmarks value {"TRAGION_RIGHT": "4869", "TRAGION_LEFT": "2431", "NASION": "9396"} to a dictionary
@@ -128,7 +158,8 @@ def place_landmarks_n_measure_hsa(vtp_data_path, hsa_exec_params):
             else:  # 'manual'
                 print('Placing the landmarks by manual definition...')
                 coordinates = get_landmark_coords(hsa_exec_params)
-                landmarks = place_three_landmarks_manually(mesh_vtp=mesh, landmark_coordinates=coordinates)
+                # landmarks = place_three_landmarks_manually(mesh_vtp=mesh, landmark_coordinates=coordinates)
+                landmarks = place_landmarks_manually(mesh_vtp=mesh, landmark_coordinates=coordinates)
 
             if hsa_exec_params['export_landmarks']:
                 crop_percentage = hsa_exec_params['crop_percentage']
@@ -162,9 +193,9 @@ def define_hsa_score_storage_path(hsa_execution_params):
     else:
         texture_state = 'untextured'
 
-    if data_type == 'synthetic':
-        hsa_scores_file_path = dir_to_store_hsa_results / f'{exp_date}_hsa_indices_{data_type}_data' \
-                                              f'_{sub_data_type}_{texture_state}.xlsx'
+    if data_type == 'synthetic':  # TODO have hsa_exp_index come from hsa_ex params, not the global var
+        hsa_scores_file_path = dir_to_store_hsa_results / f'{exp_date}_hsa_indices_exp_{hsa_experiment_index}_' \
+                                                          f'{data_type}_data_{sub_data_type}_{texture_state}.xlsx'
     else:  # data_type = 'patient'
         hsa_scores_file_path = dir_to_store_hsa_results / f'{exp_date}_hsa_indices_{data_type}_data' \
                                               f'_{sub_data_type}.xlsx'
@@ -205,5 +236,8 @@ if __name__ == '__main__':
     # Change this to a directory to storage the hsa results in
     dir_to_store_hsa_results = repo_root_path / r"franz_hsa/landmark_pred_n_hsa_calc/results"
 
-    hsa_experiment_index = 6
+    hsa_experiment_index = 10
     get_hsa_or_landmarks(hsa_experiment_index)
+
+
+
