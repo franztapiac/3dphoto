@@ -122,7 +122,14 @@ landmark prediction model.
 
 
 
-### 1. ``hsa_calculator_synth_meshes.py``
+### 1. ``landmark_pred_n_hsa_calc.py``
+
+This is the central script for landmark prediction and HSA index calculation
+for either synthetic or patient data. Functions for processing either type of 
+data is imported from ``tools_synth_data_processing.py`` or 
+``tools_patient_data_processing.py``. The parameters for hsa calculation are
+defined in ``hsa_execution_parameters.xlsx``.
+
 
 ### 2. ``hsa_calculator_patient_pre_n_post_op.py``
 
