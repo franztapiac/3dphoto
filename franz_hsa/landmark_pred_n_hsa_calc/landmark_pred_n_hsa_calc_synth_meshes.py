@@ -30,28 +30,38 @@ def export_to_excel(hsa_indices, output_path, hsa_exec_params):
         for i, subtype in enumerate(list(hsa_indices.keys())):
             print(f'Exporting {subtype}...')
             # Generating the dataframe from the dictionary
-            df = pd.DataFrame.from_dict(hsa_indices[subtype], orient='index', columns=['HSA index'])
+            df = pd.DataFrame.from_dict(hsa_indices[subtype]) #, orient='index', columns=['HSA index'])
+            df = df.transpose()
+
+            # Updating the column names of the dataframe
+            column_names_mapping = {0: 'hsa_score', 1: 'cs_risk_score', 2: 'exec_duration'}
+            df.rename(columns=column_names_mapping, inplace=True)
+
             # Write the dataframe with subtype name as header
-            df.to_excel(writer, sheet_name='Sheet1', startcol=i*3, startrow=1, index=True, header=[subtype])
+            mesh_data_len = len(list(hsa_indices[subtype].values())[0])
+            df.to_excel(writer, sheet_name='hsa_output', startcol=i*(mesh_data_len + 2), startrow=1, index=True)
+            worksheet = writer.sheets['hsa_output']
+            worksheet.write(0, i * (mesh_data_len + 2), subtype)
+
+    print(f'Exported data to {str(output_path.absolute())}.')
 
 
 def define_hsa_score_storage_path(hsa_execution_params, exp_index):
 
-    exp_date = datetime.date.today().strftime("%m%d")
+    time_stamp = datetime.datetime.now().strftime("%m%d;%H%M")
     data_type = hsa_execution_params['data_type']
     sub_data_type = hsa_execution_params['sub_data_type']
 
-    if hsa_execution_params['with_texture']:
-        texture_state = 'textured'
-    else:
-        texture_state = 'untextured'
-
     if data_type == 'synthetic':  # TODO have hsa_exp_index come from hsa_ex params, not the global var
-        hsa_scores_file_path = dir_to_store_hsa_results / f'{exp_date}_hsa_indices_exp_{exp_index}_' \
+        if hsa_execution_params['with_texture']:
+            texture_state = 'textured'
+        else:
+            texture_state = 'untextured'
+        hsa_scores_file_path = dir_to_store_hsa_results / f'{time_stamp}_hsa_indices_exp_{exp_index}_' \
                                                           f'{data_type}_data_{sub_data_type}_{texture_state}.xlsx'
     else:  # data_type = 'patient'
-        hsa_scores_file_path = dir_to_store_hsa_results / f'{exp_date}_hsa_indices_{data_type}_data' \
-                                              f'_{sub_data_type}.xlsx'
+        hsa_scores_file_path = dir_to_store_hsa_results / f'{time_stamp}_hsa_indices_{data_type}_data' \
+                                                          f'_{sub_data_type}.xlsx'
 
     return hsa_scores_file_path
 
@@ -150,6 +160,8 @@ def load_patient_mesh_file_paths(data_path, file_ending):
 
 def place_landmarks_n_measure_hsa_on_patient_data(mesh_file_paths, hsa_exec_params):
 
+    print('\n// Placing landmarks and calculating HSA indices //')
+
     hsa_and_times = dict()
     verbose = hsa_exec_params['verbose']
 
@@ -188,8 +200,8 @@ def place_landmarks_n_measure_hsa_on_patient_data(mesh_file_paths, hsa_exec_para
                                                                   age=patient_age, sex=patient_sex,
                                                                   verbose=verbose)
                 toc = time.time() - tic
-                print(f'Scores for {subtype} mesh #{patient_id}: \n'
-                      f'HSA index: {hsa_index:0.2f}\n'
+                print(f'Scores for {subtype} mesh #{patient_id}: '
+                      f'HSA index: {hsa_index:0.2f}, '
                       f'CS risk score: {cs_risk_score:0.2f}')
                 hsa_and_times[subtype][patient_id] = [hsa_index, cs_risk_score, toc]
                 print(f'Working on {subtype} case #{patient_id} took {toc:.0f} seconds.')
@@ -201,7 +213,6 @@ def execute_hsa_by_params(hsa_exp_params, exp_index):
 
     # Load data and execute HSA
     data_path = Path(hsa_exp_params['exp_data_path'])
-
     if hsa_exp_params['data_type'] == 'synthetic':
         hsa_scores_n_times, times = place_landmarks_n_measure_hsa_on_synth_data(data_path=data_path,
                                                                                 hsa_exec_params=hsa_exp_params)

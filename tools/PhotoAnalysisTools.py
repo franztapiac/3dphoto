@@ -712,7 +712,6 @@ def ComputeResults(data, pca_model, num_comps = 35):
 
 def ComputeFromSphericalImage(coordsImage, age, sex, remove_scale = True):
     atlasPath = os.path.join(MODEL_DIR, 'PCAModel')
-    print(atlasPath)
     with shelve.open(atlasPath, 'r') as atlasInformation:
         indices = atlasInformation['indices']
         model = atlasInformation['model']

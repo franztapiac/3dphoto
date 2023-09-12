@@ -11,4 +11,4 @@ torch
 torch-geometric
 torchio
 vtk
-xlrd
+xlsxwriter
