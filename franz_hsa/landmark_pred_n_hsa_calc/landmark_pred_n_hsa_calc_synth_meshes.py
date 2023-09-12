@@ -160,7 +160,9 @@ def place_landmarks_n_measure_hsa_on_patient_data(mesh_file_paths, hsa_exec_para
 
             # Get age and sex information for this specific patient
             age_n_sex_db_path = hsa_exec_params['age']
-            patient_age, patient_sex = get_patient_age_and_sex(db_path=age_n_sex_db_path, patient_id=patient_id)
+            patient_age, patient_sex = get_patient_age_and_sex(db_path=age_n_sex_db_path,
+                                                               patient_id=patient_id,
+                                                               subtype_sample=subtype)
 
             mesh_file_path = mesh_file_paths[subtype][patient_id]
             mesh = ReadImage(str(mesh_file_path.absolute()))
