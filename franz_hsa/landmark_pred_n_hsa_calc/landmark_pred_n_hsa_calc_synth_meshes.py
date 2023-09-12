@@ -35,6 +35,27 @@ def export_to_excel(hsa_indices, output_path, hsa_exec_params):
             df.to_excel(writer, sheet_name='Sheet1', startcol=i*3, startrow=1, index=True, header=[subtype])
 
 
+def define_hsa_score_storage_path(hsa_execution_params, exp_index):
+
+    exp_date = datetime.date.today().strftime("%m%d")
+    data_type = hsa_execution_params['data_type']
+    sub_data_type = hsa_execution_params['sub_data_type']
+
+    if hsa_execution_params['with_texture']:
+        texture_state = 'textured'
+    else:
+        texture_state = 'untextured'
+
+    if data_type == 'synthetic':  # TODO have hsa_exp_index come from hsa_ex params, not the global var
+        hsa_scores_file_path = dir_to_store_hsa_results / f'{exp_date}_hsa_indices_exp_{exp_index}_' \
+                                                          f'{data_type}_data_{sub_data_type}_{texture_state}.xlsx'
+    else:  # data_type = 'patient'
+        hsa_scores_file_path = dir_to_store_hsa_results / f'{exp_date}_hsa_indices_{data_type}_data' \
+                                              f'_{sub_data_type}.xlsx'
+
+    return hsa_scores_file_path
+
+
 def place_landmarks_n_measure_hsa_on_synth_data(data_path, hsa_exec_params):
     """
     This function computes the HSA indices for the synthetic data in the vtp path given the HSA execution parameters.
@@ -172,27 +193,6 @@ def place_landmarks_n_measure_hsa_on_patient_data(mesh_file_paths, hsa_exec_para
                 print(f'Working on {subtype} case #{patient_id} took {toc:.0f} seconds.')
 
     return hsa_and_times
-
-
-def define_hsa_score_storage_path(hsa_execution_params, exp_index):
-
-    exp_date = datetime.date.today().strftime("%m%d")
-    data_type = hsa_execution_params['data_type']
-    sub_data_type = hsa_execution_params['sub_data_type']
-
-    if hsa_execution_params['with_texture']:
-        texture_state = 'textured'
-    else:
-        texture_state = 'untextured'
-
-    if data_type == 'synthetic':  # TODO have hsa_exp_index come from hsa_ex params, not the global var
-        hsa_scores_file_path = dir_to_store_hsa_results / f'{exp_date}_hsa_indices_exp_{exp_index}_' \
-                                                          f'{data_type}_data_{sub_data_type}_{texture_state}.xlsx'
-    else:  # data_type = 'patient'
-        hsa_scores_file_path = dir_to_store_hsa_results / f'{exp_date}_hsa_indices_{data_type}_data' \
-                                              f'_{sub_data_type}.xlsx'
-
-    return hsa_scores_file_path
 
 
 def execute_hsa_by_params(hsa_exp_params, exp_index):
