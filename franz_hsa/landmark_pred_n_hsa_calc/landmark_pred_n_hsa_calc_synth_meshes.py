@@ -54,7 +54,8 @@ def place_landmarks_n_measure_hsa_on_synth_data(data_path, hsa_exec_params):
         file_ending = hsa_exec_params['file_ending']
         for mesh_vtp_file_path in subtype_folder.glob(f'*{file_ending}'):  # for each mesh
 
-            mesh_subtype, mesh_id_num = get_mesh_info(mesh_vtp_file_path, file_ending)  # files must be named subtype1_control...
+            mesh_subtype, mesh_id_num = get_mesh_info(mesh_vtp_file_path, file_ending)
+            # files must be named subtype1_control...
 
             if only_use_first_n_samples and (mesh_id_num > sample_n_size):
                 break
@@ -160,9 +161,9 @@ def place_landmarks_n_measure_hsa_on_patient_data(mesh_file_paths, hsa_exec_para
             if hsa_exec_params['calculate_hsa']:
                 print('Calculating the HSA index...')
                 cs_risk_score, hsa_index = ComputeHSAandRiskScore(image=mesh, landmarks=landmarks,
-                                                      landmark_placement=hsa_exec_params['landmark_placement'],
-                                                      age=patient_age, sex=patient_sex,
-                                                      verbose=verbose)
+                                                                  landmark_placement=landmark_placement,
+                                                                  age=patient_age, sex=patient_sex,
+                                                                  verbose=verbose)
                 toc = time.time() - tic
                 print(f'Scores for {subtype} mesh #{patient_id}: \n'
                       f'HSA index: {hsa_index:0.2f}\n'
@@ -194,15 +195,6 @@ def define_hsa_score_storage_path(hsa_execution_params, exp_index):
     return hsa_scores_file_path
 
 
-def load_hsa_exec_parameters(params_db_path, hsa_exp_index):
-
-    hsa_exec_params_db = pd.read_excel(params_db_path, index_col=0)  # index_col = 0 s.t. hsa_exp_index = df index
-
-    hsa_exec_params = hsa_exec_params_db.loc[hsa_exp_index].to_dict()
-
-    return hsa_exec_params
-
-
 def execute_hsa_by_params(hsa_exp_params, exp_index):
 
     # Load data and execute HSA
@@ -210,9 +202,10 @@ def execute_hsa_by_params(hsa_exp_params, exp_index):
 
     if hsa_exp_params['data_type'] == 'synthetic':
         hsa_scores_n_times, times = place_landmarks_n_measure_hsa_on_synth_data(data_path=data_path,
-                                                                        hsa_exec_params=hsa_exp_params)
+                                                                                hsa_exec_params=hsa_exp_params)
     else:  # 'patient' data
-        mesh_files_paths, dataset = load_patient_mesh_file_paths(data_path=data_path, file_ending=hsa_exp_params['file_ending'])
+        mesh_files_paths, dataset = load_patient_mesh_file_paths(data_path=data_path,
+                                                                 file_ending=hsa_exp_params['file_ending'])
         hsa_scores_n_times = place_landmarks_n_measure_hsa_on_patient_data(mesh_file_paths=mesh_files_paths,
                                                                            hsa_exec_params=hsa_exp_params)
 
@@ -221,6 +214,14 @@ def execute_hsa_by_params(hsa_exp_params, exp_index):
         hsa_score_storage_path = define_hsa_score_storage_path(hsa_exp_params, exp_index)
         export_to_excel(hsa_indices=hsa_scores_n_times, output_path=hsa_score_storage_path,
                         hsa_exec_params=hsa_exp_params)
+
+
+def load_hsa_exec_parameters(params_db_path, hsa_exp_index):
+
+    hsa_exec_params_db = pd.read_excel(params_db_path, index_col=0)  # index_col = 0 s.t. hsa_exp_index = df index
+    hsa_exec_params = hsa_exec_params_db.loc[hsa_exp_index].to_dict()
+
+    return hsa_exec_params
 
 
 if __name__ == '__main__':
@@ -232,7 +233,8 @@ if __name__ == '__main__':
 
     # Define your experiment index and where to store the exported data
     experiment_index = 11
-    hsa_execution_parameters = load_hsa_exec_parameters(params_db_path=hsa_exec_params_db_path, hsa_exp_index=experiment_index)
+    hsa_execution_parameters = load_hsa_exec_parameters(params_db_path=hsa_exec_params_db_path,
+                                                        hsa_exp_index=experiment_index)
     dir_to_store_hsa_results = repo_root_path / r"franz_hsa/landmark_pred_n_hsa_calc/results"
 
     # Execute the HSA model
