@@ -151,7 +151,7 @@ def load_patient_mesh_file_paths(data_path, file_ending):
                 meshes_file_paths[subtype_sample] = dict()
 
             patient_sample_dir = time_sample / 'meshes'
-            mesh_file_path = list(patient_sample_dir.glob(f'*{file_ending}'))[0]  # TODO there are many objs
+            mesh_file_path = list(patient_sample_dir.glob(f'*{file_ending}'))[0]
             meshes_file_paths[subtype_sample][patient_id_folder.name] = mesh_file_path
             print(f'Located sample {mesh_file_path.name}.')
 
@@ -245,10 +245,11 @@ if __name__ == '__main__':
     sample_n_size = 2
 
     # Define your experiment index and where to store the exported data
-    experiment_index = 11
+    experiment_index = 12
     hsa_execution_parameters = load_hsa_exec_parameters(params_db_path=hsa_exec_params_db_path,
                                                         hsa_exp_index=experiment_index)
     dir_to_store_hsa_results = repo_root_path / r"franz_hsa/landmark_pred_n_hsa_calc/results"
 
     # Execute the HSA model
     execute_hsa_by_params(hsa_execution_parameters, experiment_index)
+

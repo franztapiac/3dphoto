@@ -311,9 +311,12 @@ def AlignPatientToTemplate(surface, landmarks, landmark_placement):
     surface = l
 
     # generate target points from template
-    if landmark_placement == 'manual':  # TODO add funtionality that though manual, can use full or reduced
-        # templateLandmarks_forRegistration = DataSet.ReadPolyData(REDUCED_CRANIALBASE_LANDMARKS_PATH)
-        templateLandmarks_forRegistration = DataSet.ReadPolyData(EURYON_CRANIALBASE_LANDMARKS_PATH)
+    if landmark_placement == 'manual':
+        if landmarks.GetNumberOfPoints() == 27:
+            templateLandmarks_forRegistration = DataSet.ReadPolyData(EURYON_CRANIALBASE_LANDMARKS_PATH)
+        else:  # 3
+            templateLandmarks_forRegistration = DataSet.ReadPolyData(REDUCED_CRANIALBASE_LANDMARKS_PATH)
+
     else:  # 'automatic'
         templateLandmarks_forRegistration = DataSet.ReadPolyData(EURYON_CRANIALBASE_LANDMARKS_PATH)
     template_space_landmarks = DataSet.ReadPolyData(GLABELLA_CRANIALBASE_LANDMARKS_PATH)
