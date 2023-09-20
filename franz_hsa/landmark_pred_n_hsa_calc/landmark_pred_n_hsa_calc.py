@@ -245,7 +245,7 @@ if __name__ == '__main__':
     sample_n_size = 2
 
     # Define your experiment index and where to store the exported data
-    experiment_index = 12
+    experiment_index = 11
     hsa_execution_parameters = load_hsa_exec_parameters(params_db_path=hsa_exec_params_db_path,
                                                         hsa_exp_index=experiment_index)
     dir_to_store_hsa_results = repo_root_path / r"franz_hsa/landmark_pred_n_hsa_calc/results"

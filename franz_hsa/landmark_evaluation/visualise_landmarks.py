@@ -184,7 +184,7 @@ def visualise_manually_defined_landmarks(landmarks_pts_path, data_path, meshes_n
 
 if __name__ == '__main__':
     use_case = 2
-    landmarks_option = 'reduced'
+    landmarks_option = 'full'
 
     if use_case == 1:  # Visualise predicted landmarks
         # There are three model names: model_A_Aug01, model_M_Aug01 and model_S_Aug01
