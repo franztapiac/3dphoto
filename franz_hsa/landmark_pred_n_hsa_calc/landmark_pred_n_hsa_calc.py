@@ -7,11 +7,12 @@ sys.path.append(repo_root_str_path)
 from Analyze3DPhotogram import PlaceLandmarks, ComputeHSAandRiskScore, ReadImage
 import datetime
 from franz_hsa.landmark_evaluation.export_landmarks import export_landmarks
+from franz_hsa.landmark_evaluation.visualise_landmarks import load_landmark_points
 import pandas as pd
 from pathlib import Path
 import random
 import time
-from tools.DataSetGraph import ReadPolyData
+from tools.DataSetGraph import ReadPolyData, WritePolyData
 from tools_synth_data_processing import get_landmark_coords, get_mesh_info, place_landmarks_manually
 from tools_patient_data_processing import get_patient_age_and_sex
 random.seed(0)
@@ -178,14 +179,27 @@ def place_landmarks_n_measure_hsa_on_patient_data(mesh_file_paths, hsa_exec_para
 
             mesh_file_path = mesh_file_paths[subtype][patient_id]
             mesh = ReadImage(str(mesh_file_path.absolute()))
+            if hsa_exec_params['export_vtp_mesh']:
+                vtp_path = str(mesh_file_path.parent / (mesh_file_path.stem + '.vtp'))
+                WritePolyData(mesh, vtp_path)
             print(f'\nWorking on {subtype} case #{patient_id}...')
 
             # Place and export landmarks
             tic = time.time()
-            print('Computing the landmarks by automatic prediction...')
             landmark_placement = hsa_exec_params['landmark_placement']
-            landmarks, _ = PlaceLandmarks(mesh, crop=hsa_exec_params['crop'], verbose=verbose,
-                                          crop_percentage=hsa_exec_params['crop_percentage'])
+            if landmark_placement == 'manual':
+                print('Placing the landmarks by manual definition...')
+                landmarks_path = mesh_file_path.parent / 'manual_landmarks.xlsx'
+                coordinates = load_landmark_points(landmarks_path)
+                # landmarks = place_three_landmarks_manually(mesh_vtp=mesh, landmark_coordinates=coordinates)
+                landmarks = place_landmarks_manually(mesh_vtp=mesh, landmark_coordinates=coordinates)
+            elif landmark_placement == 'none':
+                pass
+            else:  # automatic
+                print('Computing the landmarks by automatic prediction...')
+                landmark_placement = hsa_exec_params['landmark_placement']
+                landmarks, _ = PlaceLandmarks(mesh, crop=hsa_exec_params['crop'], verbose=verbose,
+                                              crop_percentage=hsa_exec_params['crop_percentage'])
 
             if hsa_exec_params['export_landmarks']:
                 crop_percentage = hsa_exec_params['crop_percentage']

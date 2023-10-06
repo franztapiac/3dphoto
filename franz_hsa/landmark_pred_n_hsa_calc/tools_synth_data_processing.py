@@ -31,16 +31,9 @@ def place_landmarks_manually(mesh_vtp, landmark_coordinates=None):
     for landmark in landmark_coordinates.keys():
         landmark_pt_id = int(landmark_coordinates[landmark])
         landmark_coords_dict[landmark] = np.array(mesh_vtp.GetPoint(landmark_pt_id))
-        # right_trag_coords = np.array(mesh_vtp.GetPoint(landmark_coordinates['TRAGION_RIGHT']))
 
     coords_lst = list(landmark_coords_dict.values())
     landmark_coords = np.vstack(coords_lst)
-    #
-    # right_trag_coords = np.array(mesh_vtp.GetPoint(landmark_coordinates['TRAGION_RIGHT']))  # gets coordinates of 3D pt
-    # left_trag_coords = np.array(mesh_vtp.GetPoint(landmark_coordinates['TRAGION_LEFT']))
-    # nasion_coords = np.array(mesh_vtp.GetPoint(landmark_coordinates['NASION']))
-    #
-    # landmark_coords = np.vstack((right_trag_coords, left_trag_coords, nasion_coords))
 
     manual_landmarks = vtk.vtkPolyData()
     manual_landmarks.SetPoints(vtk.vtkPoints())

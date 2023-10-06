@@ -6,18 +6,6 @@ from pathlib import Path
 import pyvista as pv
 import re
 
-"""
-Purpose of script:
-Generates a window that displays meshes with landmarks. The meshes can be those from the test set of a KDE model.
-The landmarks can be those predicted with Elkhill's landmark prediction method.
-
-Three functions are used to generate this functionality:
-1. visualise_landmarks_per_mesh: creates the window displaying a mesh and its landmarks. Click 'X' for the next mesh. 
-2. get_mesh_ids_per_subtype: gets mesh subtype and id for all meshes in a test set file (file has paths to mesh files). 
-3. visualise_landmarks_per_model: receives user input for which model's meshes to display, and whether to display 
-the control meshes. 
-"""
-
 
 def create_pv_plotter(mesh_path, pred_landmarks_path=None, landmarks_pts_path=None):
     """
@@ -123,13 +111,11 @@ def get_mesh_ids_per_subtype(json_file_path):
     return mesh_ids_per_subtype
 
 
-def get_landmark_coordinates(mesh, landmarks_points_path):
+def load_landmark_points(landmarks_points_path):
     """
-    Generate a PyVista landmarks object from the landmark point information.
-    :param mesh: PyVista Ply PolyData; a non-clipped synthetic mesh.
-    :param landmarks_points_path: Path; to an Excel file with points for each landmarking object.
+    Load the .xlsx file with the manually defined landmark points into a dictionary.
+    :return: landmark_points; dict; format {'landmark name': point ID}
     """
-
     # Convert Excel into dict
     landmarks_df = pd.read_excel(landmarks_points_path)
     landmark_points = landmarks_df.set_index('landmark_name').to_dict()['point_id']
@@ -141,6 +127,18 @@ def get_landmark_coordinates(mesh, landmarks_points_path):
             landmarks_to_remove.append(landmark)
     for landmark in landmarks_to_remove:
         del landmark_points[landmark]
+
+    return landmark_points
+
+
+def get_landmark_coordinates(mesh, landmarks_points_path):
+    """
+    Generate a PyVista landmarks object from the landmark point information.
+    :param mesh: PyVista Ply PolyData; a non-clipped synthetic mesh.
+    :param landmarks_points_path: Path; to an Excel file with points for each landmarking object.
+    """
+
+    landmark_points = load_landmark_points(landmarks_points_path)
 
     # Get landmark (x,y,z) coordinates from the mesh
     landmark_coords_dict = dict()
@@ -183,14 +181,14 @@ def visualise_manually_defined_landmarks(landmarks_pts_path, data_path, meshes_n
 
 
 if __name__ == '__main__':
-    use_case = 2
+    use_case = 3
     landmarks_option = 'full'
 
     if use_case == 1:  # Visualise predicted landmarks
         # There are three model names: model_A_Aug01, model_M_Aug01 and model_S_Aug01
         visualise_landmarks_per_model(model_name='model_A_Aug01', visualise_control_meshes=False)
 
-    else:  # Visualise manually defined landmarks
+    elif use_case == 2:  # Visualise manually defined landmarks
         if landmarks_option == 'full':
             landmarks_path = Path("./landmark_points_full.xlsx")
         else:
@@ -200,3 +198,7 @@ if __name__ == '__main__':
         subtypes = ['control', 'metopic', 'sagittal']
         visualise_manually_defined_landmarks(landmarks_pts_path=landmarks_path, data_path=synth_data_path,
                                              meshes_num=n_meshes_per_subtype, subtypes_lst=subtypes)
+    else:  # Give one landmarks file and one mesh
+        landmarks_path = Path(r"C:\Users\franz\Documents\work\projects\arp\data\patient_data\sagittal_patient_data_sept2023\1689340\pre\meshes\manual_landmarks.xlsx")
+        mesh_path = Path(r"C:\Users\franz\Documents\work\projects\arp\data\patient_data\sagittal_patient_data_sept2023\1689340\pre\meshes\1689340_210702.000070_neck_cropped.obj")
+        create_pv_plotter(mesh_path=mesh_path, landmarks_pts_path=landmarks_path)

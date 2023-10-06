@@ -5,6 +5,7 @@ from tools.PhotoAnalysisTools import AlignPatientToTemplate, GenerateSphericalMa
 from franz_hsa.landmark_evaluation.export_landmarks import export_landmarks
 from os import path
 from pathlib import Path
+from time import time
 
 
 def ReadImage(imagefilename):
@@ -88,17 +89,20 @@ if __name__ == "__main__":
     args = ParseArguments()
     #first, let's start with the landmarks
     image = ReadImage(args.input_filename)
+    tic = time()
     landmarks, cropped_image = PlaceLandmarks(image, crop=args.crop_image, verbose=args.verbose, crop_percentage=args.crop_percentage)
 
-    # Franz experiments
-    file_path = Path(args.input_filename)
-    crop_percentage = args.crop_percentage
-    age = args.age
-    sex = args.sex
-    print(f'Working with crop percentage {crop_percentage}...')
-    export_landmarks(landmarks, Path(args.input_filename), f'_without_tex_cropped_{crop_percentage}_{age}_days_{sex}_sex')
-    WritePolyData(cropped_image, str(file_path.parent / (file_path.stem + f'_without_tex_cropped_{crop_percentage}_{age}_days_{sex}_sex.vtp')))
+    # # Franz experiments
+    # file_path = Path(args.input_filename)
+    # crop_percentage = args.crop_percentage
+    # age = args.age
+    # sex = args.sex
+    # print(f'Working with crop percentage {crop_percentage}...')
+    # export_landmarks(landmarks, Path(args.input_filename), f'_without_tex_cropped_{crop_percentage}_{age}_days_{sex}_sex')
+    # WritePolyData(cropped_image, str(file_path.parent / (file_path.stem + f'_without_tex_cropped_{crop_percentage}_{age}_days_{sex}_sex.vtp')))
 
     #now the metrics!
-    riskScore, HSA_index = ComputeHSAandRiskScore(image, landmarks, args.age, args.sex, verbose=args.verbose)
+    riskScore, HSA_index = ComputeHSAandRiskScore(image, landmarks, 'automatic', args.age, args.sex, verbose=args.verbose)
+    toc = time() - tic
+    print(f'Execution lasted {toc:0.2f} seconds.')
     print(f'Results calculated from the image: {args.input_filename}\n\tCraniosynostosis Risk Score: {riskScore:0.2f}%\n\tHead Shape Anomaly Index: {HSA_index:0.2f}')
