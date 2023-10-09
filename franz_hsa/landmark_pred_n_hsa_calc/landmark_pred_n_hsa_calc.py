@@ -79,6 +79,10 @@ def place_landmarks_n_measure_hsa_on_synth_data(data_path, hsa_exec_params):
     verbose = hsa_exec_params['verbose']
 
     for subtype_folder in data_path.iterdir():  # for each patient folder
+        if 'all' not in hsa_exec_params['included_subtypes'] and \
+                subtype_folder.name not in hsa_exec_params['included_subtypes']:
+            continue
+
         # for each sample pre or post
         hsa_indices[subtype_folder.name] = dict()
         times[subtype_folder.name] = dict()
@@ -111,8 +115,7 @@ def place_landmarks_n_measure_hsa_on_synth_data(data_path, hsa_exec_params):
 
             if hsa_exec_params['export_landmarks']:
                 crop_percentage = hsa_exec_params['crop_percentage']
-                export_landmarks(landmarks, mesh_vtp_file_path, f'cropped_{crop_percentage}_'
-                                                                f'{landmark_placement}_landmark_placement')
+                export_landmarks(landmarks, mesh_vtp_file_path, landmark_placement, f'mesh_cropped_{crop_percentage}')
 
             # calculate hsa
             if hsa_exec_params['calculate_hsa']:
@@ -248,6 +251,9 @@ def load_hsa_exec_parameters(params_db_path, hsa_exp_index):
     hsa_exec_params_db = pd.read_excel(params_db_path, index_col=0)  # index_col = 0 s.t. hsa_exp_index = df index
     hsa_exec_params = hsa_exec_params_db.loc[hsa_exp_index].to_dict()
 
+    if ',' in hsa_exec_params['included_subtypes']:
+        hsa_exec_params['included_subtypes'] = hsa_exec_params['included_subtypes'].split(', ')
+
     return hsa_exec_params
 
 
@@ -259,10 +265,10 @@ if __name__ == '__main__':
     sample_n_size = 2
 
     # Define your experiment index and where to store the exported data
-    experiment_index = 11
+    experiment_index = 13
     hsa_execution_parameters = load_hsa_exec_parameters(params_db_path=hsa_exec_params_db_path,
                                                         hsa_exp_index=experiment_index)
-    dir_to_store_hsa_results = repo_root_path / r"franz_hsa/landmark_pred_n_hsa_calc/results"
+    dir_to_store_hsa_results = Path(r"C:\Users\franz\Documents\work\projects\arp\quantification-methods\tareq\kde_classifier\KDE_shape_classifier\experiment_data\raw_data\hsa_output")
 
     # Execute the HSA model
     execute_hsa_by_params(hsa_execution_parameters, experiment_index)
