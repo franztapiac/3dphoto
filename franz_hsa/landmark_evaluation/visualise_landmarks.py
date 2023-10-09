@@ -1,3 +1,9 @@
+from git import Repo
+import os
+import sys
+current_file_str_path = os.path.abspath(__file__)
+repo_root_str_path = Repo(current_file_str_path, search_parent_directories=True).git.rev_parse("--show-toplevel")
+sys.path.append(repo_root_str_path)
 import json
 import numpy as np
 from numpy import random
@@ -5,6 +11,9 @@ import pandas as pd
 from pathlib import Path
 import pyvista as pv
 import re
+from Analyze3DPhotogram import ReadImage
+from franz_hsa.landmark_pred_n_hsa_calc.tools_synth_data_processing import place_landmarks_manually
+from franz_hsa.landmark_evaluation.export_landmarks import export_landmarks
 
 
 def create_pv_plotter(mesh_path, pred_landmarks_path=None, landmarks_pts_path=None):
@@ -199,6 +208,11 @@ if __name__ == '__main__':
         visualise_manually_defined_landmarks(landmarks_pts_path=landmarks_path, data_path=synth_data_path,
                                              meshes_num=n_meshes_per_subtype, subtypes_lst=subtypes)
     else:  # Give one landmarks file and one mesh
-        landmarks_path = Path(r"C:\Users\franz\Documents\work\projects\arp\data\patient_data\sagittal_patient_data_sept2023\1689340\pre\meshes\manual_landmarks.xlsx")
-        mesh_path = Path(r"C:\Users\franz\Documents\work\projects\arp\data\patient_data\sagittal_patient_data_sept2023\1689340\pre\meshes\1689340_210702.000070_neck_cropped.obj")
-        create_pv_plotter(mesh_path=mesh_path, landmarks_pts_path=landmarks_path)
+        vtp_mesh_path = Path(r"C:\Users\franz\Documents\work\projects\arp\data\patient_data\sagittal_patient_data_sept2023\1689340\pre\meshes\1689340_210702.000070_neck_cropped.vtp")
+        obj_mesh_path = vtp_mesh_path.parent / (vtp_mesh_path.stem + '.obj')
+        vtp_mesh = ReadImage(str(vtp_mesh_path.absolute()))
+        landmarks_path = vtp_mesh_path.parent / 'manual_landmarks.xlsx'
+        coordinates = load_landmark_points(landmarks_path)
+        landmarks = place_landmarks_manually(mesh_vtp=vtp_mesh, landmark_coordinates=coordinates)
+        landmarks_ply_path = export_landmarks(landmarks, vtp_mesh_path, 'manual', f'mesh_cropped_0')
+        create_pv_plotter(mesh_path=obj_mesh_path, pred_landmarks_path=landmarks_ply_path)

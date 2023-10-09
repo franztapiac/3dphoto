@@ -42,3 +42,5 @@ def export_landmarks(landmarks, mesh_file_path: Path, landmark_placement, croppi
 
     print(f'Exporting the landmarks to {str(landmark_ply_path.absolute())}.')
     landmark_coordinates_ply.save(str(landmark_ply_path))
+
+    return landmark_ply_path
