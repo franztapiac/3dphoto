@@ -14,9 +14,10 @@ import re
 from Analyze3DPhotogram import ReadImage
 from franz_hsa.landmark_pred_n_hsa_calc.tools_synth_data_processing import place_landmarks_manually
 from franz_hsa.landmark_evaluation.export_landmarks import export_landmarks
+from vtkmodules.util import numpy_support
 
 
-def create_pv_plotter(mesh_path, pred_landmarks_path=None, landmarks_pts_path=None):
+def create_pv_plotter(mesh_path, pred_landmarks_path=None, landmarks_pts_path=None, landmark_labels=None):
     """
     Creates a PyVista plotter window showing one mesh with its manual or predicted landmarks.
     :param mesh_path: Path; to the mesh .ply file.
@@ -31,7 +32,9 @@ def create_pv_plotter(mesh_path, pred_landmarks_path=None, landmarks_pts_path=No
         landmark_coordinates = pv.read(str(pred_landmarks_path))
     else:  # assumes that manual_landmarks if given
         landmark_coordinates = get_landmark_coordinates(mesh=mesh, landmarks_points_path=landmarks_pts_path)
-    p.add_points(landmark_coordinates, render_points_as_spheres=True, point_size=15, color='r')
+    landmarks_array = numpy_support.vtk_to_numpy(landmark_coordinates.GetPoints().GetData())
+    p.add_point_labels(landmarks_array, landmark_labels, font_size=10, point_color='red', point_size=20,
+                       render_points_as_spheres=True, always_visible=True, shadow=True)
     p.add_text('{}'.format(mesh_path.name), position='upper_right', color='k')
     p.view_xy()
     p.show()
@@ -190,7 +193,7 @@ def visualise_manually_defined_landmarks(landmarks_pts_path, data_path, meshes_n
 
 
 if __name__ == '__main__':
-    use_case = 3
+    use_case = 4
     landmarks_option = 'full'
 
     if use_case == 1:  # Visualise predicted landmarks
@@ -207,7 +210,7 @@ if __name__ == '__main__':
         subtypes = ['control', 'metopic', 'sagittal']
         visualise_manually_defined_landmarks(landmarks_pts_path=landmarks_path, data_path=synth_data_path,
                                              meshes_num=n_meshes_per_subtype, subtypes_lst=subtypes)
-    else:  # Give one landmarks file and one mesh
+    elif use_case == 3:  # Give one landmarks file and one mesh
         vtp_mesh_path = Path(r"C:\Users\franz\Documents\work\projects\arp\data\patient_data\sagittal_patient_data_sept2023\1689340\pre\meshes\1689340_210702.000070_neck_cropped.vtp")
         obj_mesh_path = vtp_mesh_path.parent / (vtp_mesh_path.stem + '.obj')
         vtp_mesh = ReadImage(str(vtp_mesh_path.absolute()))
@@ -216,3 +219,10 @@ if __name__ == '__main__':
         landmarks = place_landmarks_manually(mesh_vtp=vtp_mesh, landmark_coordinates=coordinates)
         landmarks_ply_path = export_landmarks(landmarks, vtp_mesh_path, 'manual', f'mesh_cropped_0')
         create_pv_plotter(mesh_path=obj_mesh_path, pred_landmarks_path=landmarks_ply_path)
+
+    else:  # 4
+        landmark_names = ["TRAGION_RIGHT","SELLION","TRAGION_LEFT","EURYON_RIGHT","EURYON_LEFT","FRONTOTEMPORALE_RIGHT","FRONTOTEMPORALE_LEFT","VERTEX","NASION","GLABELLA","OPISTHOCRANION","GNATHION","STOMION","ZYGION_RIGHT","ZYGION_LEFT","GONION_RIGHT","GONION_LEFT","SUBNASALE","ENDOCANTHION_RIGHT","ENDOCANTHION_LEFT","EXOCANTHION_RIGHT","EXOCANTHION_LEFT","ALAR_RIGHT","ALAR_LEFT","NASALE_TIP","SUBLABIALE","UPPER_LIP"]
+        obj_mesh_path = Path(r"C:\Users\franz\Documents\work\projects\arp\data\patient_data\sagittal_patient_data_sept2023\1716156\post\meshes\1716156_20211126.000024_neck_cropped.obj")
+        landmarks_ply_parent = obj_mesh_path.parent / 'predicted_landmarks_cropped_0_automatic_landmark_placement'
+        landmarks_ply_path = list(landmarks_ply_parent.glob('*.ply'))[0]
+        create_pv_plotter(mesh_path=obj_mesh_path, pred_landmarks_path=landmarks_ply_path, landmark_labels=landmark_names)

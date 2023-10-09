@@ -43,7 +43,7 @@ def ComputeHSAandRiskScore(image, landmarks, landmark_placement, age, sex, verbo
     #now, compute the HSA index and risk score!
     if verbose:
         print('Aligning image to template...')
-    output_mesh, transform = AlignPatientToTemplate(image, landmarks, landmark_placement)
+    output_mesh, transform = AlignPatientToTemplate(image, landmarks)
     if verbose:
         print('Generating spherical image...')
     spherical_image = GenerateSphericalMapOfData(output_mesh, transform)

@@ -300,7 +300,7 @@ def CreateMeshFromBinaryImage(binaryImage, insidePixelValue=1):
 
     return mesh
 
-def AlignPatientToTemplate(surface, landmarks, landmark_placement):
+def AlignPatientToTemplate(surface, landmarks):
 
     l = vtk.vtkPolyData()
     l.DeepCopy(landmarks)
@@ -313,7 +313,7 @@ def AlignPatientToTemplate(surface, landmarks, landmark_placement):
     # generate target points from template
     if landmarks.GetNumberOfPoints() == 27:
         templateLandmarks_forRegistration = DataSet.ReadPolyData(EURYON_CRANIALBASE_LANDMARKS_PATH)
-    else:
+    else:  # 3
         templateLandmarks_forRegistration = DataSet.ReadPolyData(REDUCED_CRANIALBASE_LANDMARKS_PATH)
 
     template_space_landmarks = DataSet.ReadPolyData(GLABELLA_CRANIALBASE_LANDMARKS_PATH)
