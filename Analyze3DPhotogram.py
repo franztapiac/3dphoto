@@ -32,7 +32,7 @@ def PlaceLandmarks(image, crop=True, verbose = True, crop_percentage = 0.4):
     return landmarks, cropped_image
 
 
-def ComputeHSAandRiskScore(image, landmarks, landmark_placement, age, sex, verbose = True):
+def ComputeHSAandRiskScore(image, landmarks, age, sex, verbose = True):
     '''
     Inputs:
         image: vtk polydata of the 3D photogram
@@ -102,7 +102,7 @@ if __name__ == "__main__":
     # WritePolyData(cropped_image, str(file_path.parent / (file_path.stem + f'_without_tex_cropped_{crop_percentage}_{age}_days_{sex}_sex.vtp')))
 
     #now the metrics!
-    riskScore, HSA_index = ComputeHSAandRiskScore(image, landmarks, 'automatic', args.age, args.sex, verbose=args.verbose)
+    riskScore, HSA_index = ComputeHSAandRiskScore(image, landmarks, args.age, args.sex, verbose=args.verbose)
     toc = time() - tic
     print(f'Execution lasted {toc:0.2f} seconds.')
     print(f'Results calculated from the image: {args.input_filename}\n\tCraniosynostosis Risk Score: {riskScore:0.2f}%\n\tHead Shape Anomaly Index: {HSA_index:0.2f}')

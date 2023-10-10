@@ -53,6 +53,8 @@ def define_hsa_score_storage_path(hsa_execution_params, exp_index):
     time_stamp = datetime.datetime.now().strftime("%m%d;%H%M")
     data_type = hsa_execution_params['data_type']
     sub_data_type = hsa_execution_params['sub_data_type']
+    landmark_placement = hsa_execution_params['landmark_placement']
+    num_landmarks = hsa_execution_params['num_landmarks']
 
     if data_type == 'synthetic':  # TODO have hsa_exp_index come from hsa_ex params, not the global var
         if hsa_execution_params['with_texture']:
@@ -60,10 +62,12 @@ def define_hsa_score_storage_path(hsa_execution_params, exp_index):
         else:
             texture_state = 'untextured'
         hsa_scores_file_path = dir_to_store_hsa_results / f'{time_stamp}_hsa_indices_exp_{exp_index}_' \
-                                                          f'{data_type}_data_{sub_data_type}_{texture_state}.xlsx'
+                                                          f'{data_type}_data_{sub_data_type}_{texture_state}_' \
+                                                          f'{num_landmarks}_{landmark_placement}_landmarks.xlsx'
     else:  # data_type = 'patient'
         hsa_scores_file_path = dir_to_store_hsa_results / f'{time_stamp}_hsa_indices_{data_type}_data' \
-                                                          f'_{sub_data_type}.xlsx'
+                                                          f'_{sub_data_type}_{num_landmarks}_{landmark_placement}_' \
+                                                          f'landmarks.xlsx'
 
     return hsa_scores_file_path
 
@@ -106,6 +110,7 @@ def place_landmarks_n_measure_hsa_on_synth_data(data_path, hsa_exec_params):
                 print('Computing the landmarks by automatic prediction...')
                 landmarks, _ = PlaceLandmarks(mesh, crop=hsa_exec_params['crop'], verbose=hsa_exec_params['verbose'],
                                               crop_percentage=crop_percentage)
+            hsa_exec_params['num_landmarks'] = landmarks.GetNumberOfPoints()
 
             # export landmarks
             if hsa_exec_params['export_landmarks']:
@@ -116,7 +121,6 @@ def place_landmarks_n_measure_hsa_on_synth_data(data_path, hsa_exec_params):
             if hsa_exec_params['calculate_hsa']:
                 print('Calculating the HSA index...')
                 cs_risk_score, hsa_index = ComputeHSAandRiskScore(image=mesh, landmarks=landmarks,
-                                                                  landmark_placement=landmark_placement,
                                                                   age=hsa_exec_params['age'],
                                                                   sex=hsa_exec_params['sex'],
                                                                   verbose=hsa_exec_params['verbose'])
@@ -207,7 +211,6 @@ def place_landmarks_n_measure_hsa_on_patient_data(mesh_file_paths, hsa_exec_para
             if hsa_exec_params['calculate_hsa']:
                 print('Calculating the HSA index...')
                 cs_risk_score, hsa_index = ComputeHSAandRiskScore(image=mesh, landmarks=landmarks,
-                                                                  landmark_placement=landmark_placement,
                                                                   age=patient_age, sex=patient_sex,
                                                                   verbose=hsa_exec_params['verbose'])
                 toc = time.time() - tic
