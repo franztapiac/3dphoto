@@ -32,9 +32,12 @@ def create_pv_plotter(mesh_path, pred_landmarks_path=None, landmarks_pts_path=No
         landmark_coordinates = pv.read(str(pred_landmarks_path))
     else:  # assumes that manual_landmarks if given
         landmark_coordinates = get_landmark_coordinates(mesh=mesh, landmarks_points_path=landmarks_pts_path)
-    landmarks_array = numpy_support.vtk_to_numpy(landmark_coordinates.GetPoints().GetData())
-    p.add_point_labels(landmarks_array, landmark_labels, font_size=10, point_color='red', point_size=20,
-                       render_points_as_spheres=True, always_visible=True, shadow=True)
+    if landmark_labels:
+        landmarks_array = numpy_support.vtk_to_numpy(landmark_coordinates.GetPoints().GetData())
+        p.add_point_labels(landmarks_array, landmark_labels, font_size=10, point_color='red', point_size=20,
+                           render_points_as_spheres=True, always_visible=True, shadow=True)
+    else:
+        p.add_points(landmark_coordinates, render_points_as_spheres=True, point_size=15, color='r')
     p.add_text('{}'.format(mesh_path.name), position='upper_right', color='k')
     p.view_xy()
     p.show()
@@ -193,7 +196,7 @@ def visualise_manually_defined_landmarks(landmarks_pts_path, data_path, meshes_n
 
 
 if __name__ == '__main__':
-    use_case = 4
+    use_case = 2
     landmarks_option = 'full'
 
     if use_case == 1:  # Visualise predicted landmarks
@@ -206,7 +209,7 @@ if __name__ == '__main__':
         else:
             landmarks_path = Path("./landmark_points_reduced.xlsx")
         synth_data_path = Path(r"C:\Users\franz\Documents\work\projects\arp\data\synthetic_data\synthetic_data_original_untextured_unclipped_ply")
-        n_meshes_per_subtype = 2
+        n_meshes_per_subtype = 3
         subtypes = ['control', 'metopic', 'sagittal']
         visualise_manually_defined_landmarks(landmarks_pts_path=landmarks_path, data_path=synth_data_path,
                                              meshes_num=n_meshes_per_subtype, subtypes_lst=subtypes)
@@ -222,7 +225,9 @@ if __name__ == '__main__':
 
     else:  # 4
         landmark_names = ["TRAGION_RIGHT","SELLION","TRAGION_LEFT","EURYON_RIGHT","EURYON_LEFT","FRONTOTEMPORALE_RIGHT","FRONTOTEMPORALE_LEFT","VERTEX","NASION","GLABELLA","OPISTHOCRANION","GNATHION","STOMION","ZYGION_RIGHT","ZYGION_LEFT","GONION_RIGHT","GONION_LEFT","SUBNASALE","ENDOCANTHION_RIGHT","ENDOCANTHION_LEFT","EXOCANTHION_RIGHT","EXOCANTHION_LEFT","ALAR_RIGHT","ALAR_LEFT","NASALE_TIP","SUBLABIALE","UPPER_LIP"]
-        obj_mesh_path = Path(r"C:\Users\franz\Documents\work\projects\arp\data\patient_data\sagittal_patient_data_sept2023\1716156\post\meshes\1716156_20211126.000024_neck_cropped.obj")
+        mesh_dir_str_path = r"C:\Users\franz\Documents\work\projects\arp\data\patient_data\sagittal_patient_data_sept2023\1773993\pre"
+        mesh_dir = Path(mesh_dir_str_path)
+        obj_mesh_path = list((mesh_dir / 'meshes').glob('*_neck_cropped.obj'))[0]
         landmarks_ply_parent = obj_mesh_path.parent / 'predicted_landmarks_cropped_0_automatic_landmark_placement'
         landmarks_ply_path = list(landmarks_ply_parent.glob('*.ply'))[0]
         create_pv_plotter(mesh_path=obj_mesh_path, pred_landmarks_path=landmarks_ply_path, landmark_labels=landmark_names)
