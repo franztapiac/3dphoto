@@ -34,7 +34,7 @@ def create_pv_plotter(mesh_path, pred_landmarks_path=None, landmarks_pts_path=No
         landmark_coordinates = get_landmark_coordinates(mesh=mesh, landmarks_points_path=landmarks_pts_path)
     if landmark_labels:
         landmarks_array = numpy_support.vtk_to_numpy(landmark_coordinates.GetPoints().GetData())
-        p.add_point_labels(landmarks_array, landmark_labels, font_size=10, point_color='red', point_size=20,
+        p.add_point_labels(landmarks_array, landmark_labels, font_size=20, point_color='red', point_size=20,
                            render_points_as_spheres=True, always_visible=True, shadow=True)
     else:
         p.add_points(landmark_coordinates, render_points_as_spheres=True, point_size=15, color='r')
@@ -209,7 +209,7 @@ if __name__ == '__main__':
         else:
             landmarks_path = Path("./landmark_points_reduced.xlsx")
         synth_data_path = Path(r"C:\Users\franz\Documents\work\projects\arp\data\synthetic_data\synthetic_data_original_untextured_unclipped_ply")
-        n_meshes_per_subtype = 3
+        n_meshes_per_subtype = 5
         subtypes = ['control', 'metopic', 'sagittal']
         visualise_manually_defined_landmarks(landmarks_pts_path=landmarks_path, data_path=synth_data_path,
                                              meshes_num=n_meshes_per_subtype, subtypes_lst=subtypes)
@@ -223,7 +223,15 @@ if __name__ == '__main__':
         landmarks_ply_path = export_landmarks(landmarks, vtp_mesh_path, 'manual', f'mesh_cropped_0')
         create_pv_plotter(mesh_path=obj_mesh_path, pred_landmarks_path=landmarks_ply_path)
 
-    else:  # 4
+    elif use_case == 4:
+        case_path = Path(r"C:\Users\franz\Documents\work\projects\arp\data\synthetic_data\synthetic_data_original_untextured_unclipped_ply\sagittal\sagittal_inst_038.ply")
+        p = pv.Plotter()
+        mesh = pv.read(str(case_path))
+        p.add_mesh(mesh)
+        p.add_text('{}'.format(case_path.name), position='upper_right', color='k')
+        p.view_xy()
+        p.show()
+    else:  # 5
         landmark_names = ["TRAGION_RIGHT","SELLION","TRAGION_LEFT","EURYON_RIGHT","EURYON_LEFT","FRONTOTEMPORALE_RIGHT","FRONTOTEMPORALE_LEFT","VERTEX","NASION","GLABELLA","OPISTHOCRANION","GNATHION","STOMION","ZYGION_RIGHT","ZYGION_LEFT","GONION_RIGHT","GONION_LEFT","SUBNASALE","ENDOCANTHION_RIGHT","ENDOCANTHION_LEFT","EXOCANTHION_RIGHT","EXOCANTHION_LEFT","ALAR_RIGHT","ALAR_LEFT","NASALE_TIP","SUBLABIALE","UPPER_LIP"]
         mesh_dir_str_path = r"C:\Users\franz\Documents\work\projects\arp\data\patient_data\sagittal_patient_data_sept2023\1773993\pre"
         mesh_dir = Path(mesh_dir_str_path)
