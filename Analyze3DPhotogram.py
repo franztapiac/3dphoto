@@ -1,12 +1,9 @@
-import argparse
 from tools.DataSetGraph import ReadPolyData, WritePolyData, LoadOBJFile
+import pdb
+from os import path
+import argparse
 from tools.LandmarkingUtils import RunInference
 from tools.PhotoAnalysisTools import AlignPatientToTemplate, GenerateSphericalMapOfData, ComputeFromSphericalImage
-from franz_hsa.landmark_evaluation.export_landmarks import export_landmarks
-from os import path
-from pathlib import Path
-from time import time
-
 
 def ReadImage(imagefilename):
     if imagefilename.endswith('.obj'):
@@ -15,9 +12,7 @@ def ReadImage(imagefilename):
         image = ReadPolyData(imagefilename)
     return image
 
-
 def PlaceLandmarks(image, crop=True, verbose = True, crop_percentage = 0.4):
-
     '''
     Inputs:
         data_filename: String pointing to the 3D photogram
@@ -28,9 +23,8 @@ def PlaceLandmarks(image, crop=True, verbose = True, crop_percentage = 0.4):
     if verbose:
         print('Placing craniofacial landmarks...')
     #run the inference
-    landmarks, cropped_image = RunInference(image, crop=crop, return_cropped_image=True, crop_percentage = crop_percentage)
-    return landmarks, cropped_image
-
+    landmarks = RunInference(image, crop=crop, crop_percentage = crop_percentage)
+    return landmarks, image
 
 def ComputeHSAandRiskScore(image, landmarks, age, sex, verbose = True):
     '''
@@ -52,7 +46,6 @@ def ComputeHSAandRiskScore(image, landmarks, age, sex, verbose = True):
     riskScore, HSA_index = ComputeFromSphericalImage(spherical_image, age, sex)
     return riskScore, HSA_index
 
-
 def ValidVTP(param):
     _, ext = path.splitext(param)
     if (ext.lower() not in ('.vtp','.obj','.vtk')) or not (path.isfile(param)):
@@ -65,6 +58,9 @@ def ConstructArguments():
     parser.add_argument('--input_filename', metavar = 'input_filename', required = True, type = ValidVTP,
         help='Input data path')
 
+    parser.add_argument('--input_landmarks', metavar = 'input_landmarks', required = False, type = ValidVTP,default = None,
+        help='Input data path')
+
     parser.add_argument('--age', required = True, type = float, metavar = 'age',
         help='Age of the patient in days.')
 
@@ -74,14 +70,16 @@ def ConstructArguments():
     parser.add_argument('--verbose', action='store_true', help='Print out information during the processing steps.' )
 
     parser.add_argument('--crop_image',action='store_true', help = 'Option to crop the data to ensure the shoulders are not included in the photogram.')
-    parser.add_argument('--crop_percentage',action = 'store',default=0, type = float,
+    parser.add_argument('--crop_percentage',action = 'store',default=0.4, type = float,
                         help = 'Percentage of the image to crop out. Adjust this parameter between 0-1 to control cropping amount.')
     return parser
 
-
-def ParseArguments():
+def ParseArguments(argv=None):
     parser = ConstructArguments()
-    return parser.parse_args()
+    if argv is None:
+        return parser.parse_args()
+    else:
+        return parser.parse_args(argv)
 
 
 if __name__ == "__main__":
@@ -89,11 +87,13 @@ if __name__ == "__main__":
     args = ParseArguments()
     #first, let's start with the landmarks
     image = ReadImage(args.input_filename)
-    tic = time()
-    landmarks, cropped_image = PlaceLandmarks(image, crop=args.crop_image, verbose=args.verbose, crop_percentage=args.crop_percentage)
-
+    if args.input_landmarks is None:
+        landmarks, image = PlaceLandmarks(image, crop=args.crop_image, verbose=args.verbose, crop_percentage = args.crop_percentage)
+    elif path.isfile(args.input_landmarks):
+        landmarks = ReadPolyData(args.input_landmarks)
+    else:
+        raise ValueError('Invalid landmark filename!')
+    pdb.set_trace()
     #now the metrics!
     riskScore, HSA_index = ComputeHSAandRiskScore(image, landmarks, args.age, args.sex, verbose=args.verbose)
-    toc = time() - tic
-    print(f'Execution lasted {toc:0.2f} seconds.')
     print(f'Results calculated from the image: {args.input_filename}\n\tCraniosynostosis Risk Score: {riskScore:0.2f}%\n\tHead Shape Anomaly Index: {HSA_index:0.2f}')

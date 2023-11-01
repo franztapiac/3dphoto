@@ -1,14 +1,15 @@
 import torch
 import SimpleITK as sitk
-from vtkmodules.util import numpy_support
+from vtk.util import numpy_support
 import numpy as np
 import pdb
 import tools.DataSetGraph as DataSet
 import vtk
 from __init__ import CRANIOFACIAL_LANDMARKING_MODEL_PATH, CRANIOFACIAL_LANDMARKING_NOTEXTURE_MODEL_PATH
 
+
 def ConvertToVTP(data, landmarks):
-    #unnormalize the result
+    # unnormalize the result
     data.y = landmarks.squeeze()
     # landmarks = landmarks.squeeze() * data.norm_values
     data = DataSet.unnormalize_data(data)
@@ -16,17 +17,18 @@ def ConvertToVTP(data, landmarks):
     out_landmarks = vtk.vtkPolyData()
     out_landmarks.SetPoints(vtk.vtkPoints())
     for p in range(len(landmarks)):
-        out_landmarks.GetPoints().InsertNextPoint(landmarks[p, 0 ], landmarks[p, 1], landmarks[p, 2])  # x,y,z likely
-    return out_landmarks 
+        out_landmarks.GetPoints().InsertNextPoint(landmarks[p, 0], landmarks[p, 1], landmarks[p, 2])
+    return out_landmarks
+
 
 def InterpolateTextureToPoints(mesh, new_mesh):
-    #building the cell locator and extracting the cell textures
+    # building the cell locator and extracting the cell textures
     celltopd = vtk.vtkCellDataToPointData()
     celltopd.SetInputData(mesh)
     celltopd.Update()
     mesh = celltopd.GetOutput()
 
-    #looping through all of the points, finding the closest cell, and taking the texture
+    # looping through all of the points, finding the closest cell, and taking the texture
     textureArray = vtk.vtkFloatArray()
     textureArray.SetName('Texture')
     textureArray.SetNumberOfComponents(3)
@@ -35,36 +37,25 @@ def InterpolateTextureToPoints(mesh, new_mesh):
     locator.Update()
     for point in range(new_mesh.GetNumberOfPoints()):
         try:
-            textureArray.InsertNextTuple3(*mesh.GetPointData().GetArray('Texture').GetTuple(locator.FindClosestPoint(*new_mesh.GetPoint(point))))
-            # new_mesh.GetPoint(0) -> (-56.822017669677734, 30.91840171813965, -55.818843841552734)
-            # [*new_mesh.GetPoint(0)] -> [-56.822017669677734, 30.91840171813965, -55.818843841552734]
-            # print(*new_mesh.GetPoint(0)) -> -56.822017669677734 30.91840171813965 -55.818843841552734
-            # locator.FindClosestPoint(*new_mesh.GetPoint(0)) -> 0
-            # locator.FindClosestPoint(*new_mesh.GetPoint(7430)) -> 2813
-
-            # mesh.GetPointData() -> <vtkmodules.vtkCommonDataModel.vtkPointData(0x00000213E59C9B20) at 0x00000213E73C6160>
-            # mesh.GetPointData().GetArray('Texture') -> None
-            # mesh.GetPointData().GetArray() -> TypeError: no overloads of GetArray() take 0 arguments
-            # mesh.GetPointData().GetArray(0 or 1) -> vtkTypeFloat32Array or vtkTypeUInt8Array
-            # mesh.GetPointData().GetAbstractArray(0 or 1) -> vtkTypeFloat32Array or vtkTypeUInt8Array
-
+            textureArray.InsertNextTuple3(
+                *mesh.GetPointData().GetArray('Texture').GetTuple(locator.FindClosestPoint(*new_mesh.GetPoint(point))))
         except:
             raise ValueError('No texture array found in photo!')
-    
+
     new_mesh.GetPointData().AddArray(textureArray)
     return new_mesh
 
-def DownsampleMesh(mesh, target_reduction = 0.1, use_texture = True):
 
+def DownsampleMesh(mesh, target_reduction=0.1, use_texture=True):
     # Making sure there are only triangles
     filter = vtk.vtkTriangleFilter()
     filter.SetInputData(mesh)
     filter.Update()
     mesh = filter.GetOutput()
-    
+
     filter = vtk.vtkQuadricDecimation()
     filter.SetInputData(mesh)
-    filter.SetTargetReduction(1-target_reduction)
+    filter.SetTargetReduction(1 - target_reduction)
     filter.Update()
     decimated_mesh = filter.GetOutput()
     if use_texture:
@@ -83,32 +74,36 @@ def DownsampleMesh(mesh, target_reduction = 0.1, use_texture = True):
 
     return decimated_mesh
 
+
 def HasTexture(surface):
     return bool(surface.GetCellData().HasArray('Texture'))
 
-def ConvertSurfaceToGraph(surface, target_points = 20000, use_texture = True):
+
+def ConvertSurfaceToGraph(surface, target_points=20000, use_texture=True):
     initial_points = surface.GetNumberOfPoints()
-    downsampled_surface = DownsampleMesh(surface, target_reduction = target_points/initial_points, use_texture=use_texture)
+    downsampled_surface = DownsampleMesh(surface, target_reduction=target_points / initial_points,
+                                         use_texture=use_texture)
     graphdata = DataSet.convert_to_graph(downsampled_surface, None, use_texture=use_texture)
     return graphdata
 
-def AddArraysToLandmarks(landmarks, landmark_names = None):
+
+def AddArraysToLandmarks(landmarks, landmark_names=None):
     defaultColors = [
-    [255, 0, 0], # r
-    [0, 255, 0], # g
-    [0, 0, 255], # b
-    [255, 0, 255], # m
-    [0, 255, 255], # c
-    [255, 255, 0]  # y
+        [255, 0, 0],  # r
+        [0, 255, 0],  # g
+        [0, 0, 255],  # b
+        [255, 0, 255],  # m
+        [0, 255, 255],  # c
+        [255, 255, 0]  # y
     ]
-    
+
     num_landmarks = landmarks.GetNumberOfPoints()
     colorArray = vtk.vtkFloatArray()
     colorArray.SetName('Color')
     colorArray.SetNumberOfComponents(3)
     for x in range(num_landmarks):
         color = defaultColors[x % len(defaultColors)]
-        colorArray.InsertNextTuple3(color[0],color[1],color[2])
+        colorArray.InsertNextTuple3(color[0], color[1], color[2])
     landmarks.GetPointData().AddArray(colorArray)
 
     nameArray = vtk.vtkStringArray()
@@ -123,24 +118,55 @@ def AddArraysToLandmarks(landmarks, landmark_names = None):
     landmarks.GetPointData().AddArray(nameArray)
     return landmarks
 
-def DefaultLandmarkNames():
-    return ["TRAGION_RIGHT","SELLION","TRAGION_LEFT","EURYON_RIGHT","EURYON_LEFT","FRONTOTEMPORALE_RIGHT","FRONTOTEMPORALE_LEFT","VERTEX","NASION","GLABELLA","OPISTHOCRANION","GNATHION","STOMION","ZYGION_RIGHT","ZYGION_LEFT","GONION_RIGHT","GONION_LEFT","SUBNASALE","ENDOCANTHION_RIGHT","ENDOCANTHION_LEFT","EXOCANTHION_RIGHT","EXOCANTHION_LEFT","ALAR_RIGHT","ALAR_LEFT","NASALE_TIP","SUBLABIALE","UPPER_LIP"]
 
-def PlacePatientLandmarksGraph(data, use_texture = True):
+def GetLandmarkNames(landmarks):
+    arr = landmarks.GetPointData().GetAbstractArray('LandmarkName')
+    return np.array([arr.GetValue(x) for x in range(arr.GetNumberOfValues())])
+
+
+def SelectLandmarks(landmarks, selection):
+    l = vtk.vtkPolyData()
+    l.DeepCopy(landmarks)
+    landmarks = l
+
+    landmark_names = GetLandmarkNames(landmarks)
+    if not np.all(np.isin(selection, landmark_names)):
+        raise ValueError('Incorrect landmark selection! Please check input.')
+
+    ids = [int(np.where(landmark_names == x)[0]) for x in selection]
+    out_landmarks = vtk.vtkPolyData()
+    out_landmarks.SetPoints(vtk.vtkPoints())
+    for id in ids:
+        out_landmarks.GetPoints().InsertNextPoint(landmarks.GetPoints().GetPoint(id))
+    # now add the landmark name array and color
+    out_landmarks = AddArraysToLandmarks(out_landmarks, landmark_names=selection)
+    return out_landmarks
+
+
+def DefaultLandmarkNames():
+    return ["TRAGION_RIGHT", "SELLION", "TRAGION_LEFT", "EURYON_RIGHT", "EURYON_LEFT", "FRONTOTEMPORALE_RIGHT",
+            "FRONTOTEMPORALE_LEFT", "VERTEX", "NASION", "GLABELLA", "OPISTHOCRANION", "GNATHION", "STOMION",
+            "ZYGION_RIGHT", "ZYGION_LEFT", "GONION_RIGHT", "GONION_LEFT", "SUBNASALE", "ENDOCANTHION_RIGHT",
+            "ENDOCANTHION_LEFT", "EXOCANTHION_RIGHT", "EXOCANTHION_LEFT", "ALAR_RIGHT", "ALAR_LEFT", "NASALE_TIP",
+            "SUBLABIALE", "UPPER_LIP"]
+
+
+def PlacePatientLandmarksGraph(data, use_texture=True):
     if use_texture:
         model = torch.jit.load(CRANIOFACIAL_LANDMARKING_MODEL_PATH)
     else:
-        model= torch.jit.load(CRANIOFACIAL_LANDMARKING_NOTEXTURE_MODEL_PATH)
+        model = torch.jit.load(CRANIOFACIAL_LANDMARKING_NOTEXTURE_MODEL_PATH)
     model.eval()
     return model(data.pos, data.x, data.batch, data.edge_index)
 
+
 def FitLandmarksOnMesh(landmarks, heat_map, surface, graph):
-    normal_vectors = (heat_map[:,:,None] * graph.x[:,None,:3]).mean(dim = 0)
-    normal_vectors = normal_vectors/(normal_vectors**2).sum(dim = 1).sqrt()[:,None]
-    
+    normal_vectors = (heat_map[:, :, None] * graph.x[:, None, :3]).mean(dim=0)
+    normal_vectors = normal_vectors / (normal_vectors ** 2).sum(dim=1).sqrt()[:, None]
+
     # This speeds up finding the intersecitons when doing ray-casting
     cellLocator = vtk.vtkCellLocator()
-    cellLocator.SetDataSet(surface) 
+    cellLocator.SetDataSet(surface)
     cellLocator.BuildLocator()
 
     radius = 1000
@@ -150,10 +176,10 @@ def FitLandmarksOnMesh(landmarks, heat_map, surface, graph):
     final_landmarks.SetPoints(vtk.vtkPoints())
     for idx in range(landmarks.GetNumberOfPoints()):
         landmark = landmarks.GetPoint(idx)
-        normal_vector = normal_vectors[idx,:]
-        rayEnd[0] = landmark[0] + radius* normal_vector[0]
-        rayEnd[1] = landmark[1] + radius* normal_vector[1]
-        rayEnd[2] = landmark[2] + radius* normal_vector[2]
+        normal_vector = normal_vectors[idx, :]
+        rayEnd[0] = landmark[0] + radius * normal_vector[0]
+        rayEnd[1] = landmark[1] + radius * normal_vector[1]
+        rayEnd[2] = landmark[2] + radius * normal_vector[2]
 
         intersectedPoint = np.zeros([3], dtype=np.float64)
         intersectionPoints = vtk.vtkPoints()
@@ -167,8 +193,9 @@ def FitLandmarksOnMesh(landmarks, heat_map, surface, graph):
             for p in range(intersectionPoints.GetNumberOfPoints()):
 
                 intersectionPoints.GetPoint(p, intersectedPoint)
-                dist = np.sqrt((landmark[0] - intersectedPoint[0])**2 + (landmark[1] - intersectedPoint[1])**2 + (landmark[2] - intersectedPoint[2])**2 )
-            
+                dist = np.sqrt((landmark[0] - intersectedPoint[0]) ** 2 + (landmark[1] - intersectedPoint[1]) ** 2 + (
+                            landmark[2] - intersectedPoint[2]) ** 2)
+
                 if dist < closestDist:
                     closestDist = dist
                     closestId = p
@@ -178,7 +205,9 @@ def FitLandmarksOnMesh(landmarks, heat_map, surface, graph):
             final_landmarks.GetPoints().InsertNextPoint(*landmark)
     return final_landmarks
 
-def CutMeshWithCranialBaseLandmarks(mesh, landmarkCoords, extraSpace=0, useTwoLandmarks=False, invertCropDirection = False):
+
+def CutMeshWithCranialBaseLandmarks(mesh, landmarkCoords, extraSpace=0, useTwoLandmarks=False,
+                                    invertCropDirection=False):
     """
     Crops the input surface model using the planes defined by the input landmarks
 
@@ -199,38 +228,38 @@ def CutMeshWithCranialBaseLandmarks(mesh, landmarkCoords, extraSpace=0, useTwoLa
         The resulting surface model
     """
 
-
     # landmarkCoords = np.zeros([landmarks.GetNumberOfPoints(), 3], dtype=np.float32)
     # for p in range(landmarks.GetNumberOfPoints()):
     #     landmarkCoords[p,:] = np.array(landmarks.GetPoint(p))
 
     if not useTwoLandmarks:
-        
+
         # normal of first plane
-        v0 = landmarkCoords[1, :] - landmarkCoords[0, :] # For plane 1 (frontal)
+        v0 = landmarkCoords[1, :] - landmarkCoords[0, :]  # For plane 1 (frontal)
         v1 = landmarkCoords[2, :] - landmarkCoords[0, :]
         n0 = np.cross(v0, v1)
-        n0 = n0 / np.sqrt(np.sum(n0**2))
-    
+        n0 = n0 / np.sqrt(np.sum(n0 ** 2))
+
         ###########
         ## Moving landmark coordinates 1 cm away from cranial base so we don't miss the squamousal suture
 
-        distanceToMove = (extraSpace/100.0) * np.abs(np.dot(np.mean(landmarkCoords[1:3,:], axis=0, keepdims=False) - landmarkCoords[3,:], n0))
+        distanceToMove = (extraSpace / 100.0) * np.abs(
+            np.dot(np.mean(landmarkCoords[1:3, :], axis=0, keepdims=False) - landmarkCoords[3, :], n0))
 
-        landmarkCoords[1:3,:] +=  (n0*distanceToMove).reshape((1,3))
+        landmarkCoords[1:3, :] += (n0 * distanceToMove).reshape((1, 3))
 
         # Recalculating normal of first plane
-        v0 = landmarkCoords[1, :] - landmarkCoords[0, :] # For plane 1 (frontal)
+        v0 = landmarkCoords[1, :] - landmarkCoords[0, :]  # For plane 1 (frontal)
         v1 = landmarkCoords[2, :] - landmarkCoords[0, :]
         n0 = np.cross(v0, v1)
-        n0 = n0 / np.sqrt(np.sum(n0**2))
+        n0 = n0 / np.sqrt(np.sum(n0 ** 2))
         ###########
-    
+
         # normal of second plane
-        v0 = landmarkCoords[2, :] - landmarkCoords[3, :] # For plane 2 (posterior)
+        v0 = landmarkCoords[2, :] - landmarkCoords[3, :]  # For plane 2 (posterior)
         v1 = landmarkCoords[1, :] - landmarkCoords[3, :]
         n1 = np.cross(v0, v1)
-        n1 = n1 / np.sqrt(np.sum(n1**2))
+        n1 = n1 / np.sqrt(np.sum(n1 ** 2))
 
         if invertCropDirection:
             plane1 = vtk.vtkPlane()
@@ -243,8 +272,8 @@ def CutMeshWithCranialBaseLandmarks(mesh, landmarkCoords, extraSpace=0, useTwoLa
             plane2 = vtk.vtkPlane()
             plane2.SetNormal(-n1)
 
-        plane1.SetOrigin(landmarkCoords[0,:])
-        plane2.SetOrigin(landmarkCoords[3,:])
+        plane1.SetOrigin(landmarkCoords[0, :])
+        plane2.SetOrigin(landmarkCoords[3, :])
 
         intersectionFunction = vtk.vtkImplicitBoolean()
         intersectionFunction.AddFunction(plane1)
@@ -253,22 +282,22 @@ def CutMeshWithCranialBaseLandmarks(mesh, landmarkCoords, extraSpace=0, useTwoLa
     else:
         if extraSpace > 0:
             # normal of first plane
-            v0 = landmarkCoords[1, :] - landmarkCoords[0, :] # For plane 1 (frontal)
+            v0 = landmarkCoords[1, :] - landmarkCoords[0, :]  # For plane 1 (frontal)
             v1 = landmarkCoords[2, :] - landmarkCoords[0, :]
             n0 = np.cross(v0, v1)
-            n0 = n0 / np.sqrt(np.sum(n0**2))
-            landmarkCoords[0,:] +=  (n0*extraSpace)
+            n0 = n0 / np.sqrt(np.sum(n0 ** 2))
+            landmarkCoords[0, :] += (n0 * extraSpace)
 
             # normal of second plane
-            v0 = landmarkCoords[3, :] - landmarkCoords[2, :] # For plane 1 (frontal)
+            v0 = landmarkCoords[3, :] - landmarkCoords[2, :]  # For plane 1 (frontal)
             v1 = landmarkCoords[3, :] - landmarkCoords[1, :]
             n0 = np.cross(v0, v1)
-            n0 = n0 / np.sqrt(np.sum(n0**2))
-            landmarkCoords[3,:] +=  (n0*extraSpace)
-        
+            n0 = n0 / np.sqrt(np.sum(n0 ** 2))
+            landmarkCoords[3, :] += (n0 * extraSpace)
+
         # Normal to plane
         dorsumVect = landmarkCoords[1, :] - landmarkCoords[2, :]
-        dorsumVect = dorsumVect / np.sqrt(np.sum(dorsumVect**2))
+        dorsumVect = dorsumVect / np.sqrt(np.sum(dorsumVect ** 2))
 
         p0 = landmarkCoords[0, :] + 10 * dorsumVect
         p1 = landmarkCoords[0, :] - 10 * dorsumVect
@@ -277,8 +306,7 @@ def CutMeshWithCranialBaseLandmarks(mesh, landmarkCoords, extraSpace=0, useTwoLa
         v0 = p2 - p1
         v1 = p2 - p0
         n = np.cross(v0, v1)
-        n = n / np.sqrt(np.sum(n**2))
-
+        n = n / np.sqrt(np.sum(n ** 2))
 
         plane = vtk.vtkPlane()
         if invertCropDirection:
@@ -287,27 +315,99 @@ def CutMeshWithCranialBaseLandmarks(mesh, landmarkCoords, extraSpace=0, useTwoLa
             plane.SetNormal(-n)
         plane.SetOrigin(p2)
 
-
         intersectionFunction = plane
 
-    #cutter = vtk.vtkClipPolyData()
+    # cutter = vtk.vtkClipPolyData()
     cutter = vtk.vtkExtractPolyDataGeometry()
     cutter.ExtractInsideOff()
     cutter.SetInputData(mesh)
-    #cutter.SetClipFunction(intersectionFunction)
+    # cutter.SetClipFunction(intersectionFunction)
     cutter.SetImplicitFunction(intersectionFunction)
     cutter.Update()
 
     return cutter.GetOutput()
 
-def vtkPolyDataToNumpy(polydata,arrayName =  None):
+
+def ComputeVolume(image, projected=False):
+    filter = vtk.vtkCleanPolyData()
+    filter.SetInputData(image)
+    filter.Update()
+    image = filter.GetOutput()
+    image = WrapSphere(image)
+
+    filter = vtk.vtkPolyDataNormals()
+    filter.SetInputData(image)
+    filter.ComputeCellNormalsOn()
+    filter.ComputePointNormalsOn()
+    filter.NonManifoldTraversalOn()
+    filter.AutoOrientNormalsOn()
+    filter.ConsistencyOn()
+    filter.Update()
+    image = filter.GetOutput()
+
+    filter = vtk.vtkTriangleFilter()
+    filter.PassLinesOff()
+    filter.PassVertsOff()
+    filter.SetInputData(image)
+    filter.Update()
+    image = filter.GetOutput()
+
+    mass = vtk.vtkMassProperties()
+    mass.SetInputData(image)
+    if projected:
+        vol = mass.GetVolumeProjected() / 1e3
+    else:
+        vol = mass.GetVolume() / 1e3
+    return vol
+
+
+def WrapSphere(inputMesh):
+    # Warping a sphere to the outer surface
+    center = np.zeros([3], dtype=np.float64)
+    for p in range(inputMesh.GetNumberOfPoints()):
+        center += np.array(inputMesh.GetPoint(p))
+    center /= inputMesh.GetNumberOfPoints()
+
+    sphere = vtk.vtkSphereSource()
+    sphere.SetRadius(350)
+    sphere.SetPhiResolution(60)
+    sphere.SetThetaResolution(60)
+    sphere.SetCenter(center)
+    sphere.Update()
+    sphere = sphere.GetOutput()
+
+    wrappedSphere = vtk.vtkSmoothPolyDataFilter()
+    wrappedSphere.SetInputData(0, sphere)
+    wrappedSphere.SetInputData(1, inputMesh)
+    wrappedSphere.Update()
+    wrappedSphere = wrappedSphere.GetOutput()
+
+    # Subdividing
+    filter = vtk.vtkButterflySubdivisionFilter()
+    filter.SetInputData(wrappedSphere)
+    filter.SetNumberOfSubdivisions(2)
+    filter.Update()
+    wrappedSphere = filter.GetOutput()
+
+    # Moving points to the bone so adjustment to the shape is perfect
+    for p in range(wrappedSphere.GetNumberOfPoints()):
+        coords = wrappedSphere.GetPoint(p)
+        closestId = inputMesh.FindPoint(coords[0], coords[1], coords[2])
+        coords = np.array(inputMesh.GetPoint(closestId))
+        wrappedSphere.GetPoints().SetPoint(p, coords[0], coords[1], coords[2])
+    inputMesh = wrappedSphere
+    return inputMesh
+
+
+def vtkPolyDataToNumpy(polydata, arrayName=None):
     if not arrayName:
         numpyArray = numpy_support.vtk_to_numpy(polydata.GetPoints().GetData())
     else:
         numpyArray = numpy_support.vtk_to_numpy(polydata.GetPointData().GetArray(arrayName))
     return numpyArray
 
-def CropSurface(surface, percentage = .4):
+
+def CropSurface(surface, percentage=.4):
     '''
     Inputs
         surface: the VTK PolyData object
@@ -318,44 +418,45 @@ def CropSurface(surface, percentage = .4):
     '''
     # generate the landmarks!
     points = vtkPolyDataToNumpy(surface)
-    bottom = np.min(points[:,1])
-    top = np.max(points[:,1])
+    bottom = np.min(points[:, 1])
+    top = np.max(points[:, 1])
     # make some landmarks at the percentage!
-    landmark_y = np.abs(top-bottom) * percentage + bottom
+    landmark_y = np.abs(top - bottom) * percentage + bottom
     landmarks = np.zeros([4, 3], dtype=np.float32)
-    landmarks[:,1] = landmark_y
+    landmarks[:, 1] = landmark_y
 
-    #front!
-    landmarks[0,0] = np.mean(points[:,0])
-    landmarks[0,2] = np.max(points[:,2])
+    # front!
+    landmarks[0, 0] = np.mean(points[:, 0])
+    landmarks[0, 2] = np.max(points[:, 2])
 
-    #back!
-    landmarks[3,0] = np.mean(points[:,0])
-    landmarks[3,2] = np.min(points[:,2])
+    # back!
+    landmarks[3, 0] = np.mean(points[:, 0])
+    landmarks[3, 2] = np.min(points[:, 2])
 
-    #right size
-    landmarks[1,0] = np.min(points[:,0])
-    landmarks[1,2] = np.mean(points[:,2])
+    # right size
+    landmarks[1, 0] = np.min(points[:, 0])
+    landmarks[1, 2] = np.mean(points[:, 2])
 
-    #left side
-    landmarks[2,0] = np.max(points[:,0])
-    landmarks[2,2] = np.mean(points[:,2])
+    # left side
+    landmarks[2, 0] = np.max(points[:, 0])
+    landmarks[2, 2] = np.mean(points[:, 2])
 
     cropped_surface = CutMeshWithCranialBaseLandmarks(surface, landmarks, extraSpace=0, useTwoLandmarks=True)
     return cropped_surface
 
-def RunInference(surface, crop = True, return_cropped_image = False, crop_percentage = 0.4):
+
+def RunInference(surface, crop=True, return_cropped_image=False, crop_percentage=0.4):
     # crop if needed 
     if crop:
-        if crop_percentage>=1:
+        if crop_percentage >= 1:
             raise ValueError('Cropping percentage is >= 1. Please lower cropping percentage to < 1.')
-        cropped_surface = CropSurface(surface, percentage = crop_percentage)
+        cropped_surface = CropSurface(surface, percentage=crop_percentage)
     else:
         cropped_surface = surface
 
     use_texture = HasTexture(cropped_surface)
-    graph = ConvertSurfaceToGraph(cropped_surface, use_texture = use_texture)
-    landmarks, heat_map = PlacePatientLandmarksGraph(graph, use_texture = use_texture)
+    graph = ConvertSurfaceToGraph(cropped_surface, use_texture=use_texture)
+    landmarks, heat_map = PlacePatientLandmarksGraph(graph, use_texture=use_texture)
     landmarks_vtp = ConvertToVTP(graph, landmarks)
     landmarks_vtp = FitLandmarksOnMesh(landmarks_vtp, heat_map, surface, graph)
     landmarks_vtp = AddArraysToLandmarks(landmarks_vtp)
