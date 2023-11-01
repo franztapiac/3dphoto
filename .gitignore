@@ -21,3 +21,4 @@ tools/__pycache__/LandmarkingUtils.cpython-39.pyc
 franz_hsa/landmark_pred_n_hsa_calc/__pycache__/tools_patient_data_processing.cpython-39.pyc
 franz_hsa/landmark_pred_n_hsa_calc/__pycache__/tools_synth_data_processing.cpython-39.pyc
 franz_hsa/landmark_evaluation/__pycache__/visualise_landmarks.cpython-39.pyc
+NormativePCAModel/MaskImage.mha
