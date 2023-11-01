@@ -92,15 +92,6 @@ if __name__ == "__main__":
     tic = time()
     landmarks, cropped_image = PlaceLandmarks(image, crop=args.crop_image, verbose=args.verbose, crop_percentage=args.crop_percentage)
 
-    # # Franz experiments
-    # file_path = Path(args.input_filename)
-    # crop_percentage = args.crop_percentage
-    # age = args.age
-    # sex = args.sex
-    # print(f'Working with crop percentage {crop_percentage}...')
-    # export_landmarks(landmarks, Path(args.input_filename), f'_without_tex_cropped_{crop_percentage}_{age}_days_{sex}_sex')
-    # WritePolyData(cropped_image, str(file_path.parent / (file_path.stem + f'_without_tex_cropped_{crop_percentage}_{age}_days_{sex}_sex.vtp')))
-
     #now the metrics!
     riskScore, HSA_index = ComputeHSAandRiskScore(image, landmarks, args.age, args.sex, verbose=args.verbose)
     toc = time() - tic
