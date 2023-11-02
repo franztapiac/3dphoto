@@ -54,19 +54,39 @@ def create_vtp_mesh(mesh_points, mesh_cells):
 def write_texture_on_vtp_mesh(mesh_polydata, mesh_texture):
     """
     Writes the texture information into the vtk PolyData object.
-    :param mesh_polydata: a vtk PolyData mesh object with 45,081 points.
-    :param mesh_texture: a numpy array (45,081 x 3) with RGB texture information for each mesh point.
+    :param mesh_polydata: a vtk PolyData mesh object with 13,151 points.
+    :param mesh_texture: a numpy array (13,151 x 3) with RGB texture information for each mesh point.
     """
 
-    colors = vtk.vtkUnsignedCharArray()
-    colors.SetNumberOfComponents(3)
-    colors.SetName('Texture')
+    pt_texture_array = vtk.vtkUnsignedCharArray()
+    pt_texture_array.SetName('Texture')
+    pt_texture_array.SetNumberOfComponents(3)
 
+    mesh_texture = mesh_texture.astype(int)
     for point_texture in mesh_texture:
-        colors.InsertNextTuple3(*point_texture)
+        pt_texture_array.InsertNextTuple3(*point_texture)
 
-    mesh_polydata.GetPointData().SetScalars(colors)
+    mesh_polydata.GetPointData().AddArray(pt_texture_array)
     mesh_polydata.Modified()
+
+    ptc = vtk.vtkPointDataToCellData()
+    ptc.SetInputData(mesh_polydata)
+    ptc.Update()
+    mesh_polydata = ptc.GetOutput()
+
+    cell_texture_array = vtk.vtkUnsignedCharArray()
+    cell_texture_array.SetName('Texture')
+    cell_texture_array.SetNumberOfComponents(3)
+    for point in range(mesh_polydata.GetCellData().GetArray('Texture').GetNumberOfTuples()):
+        cell_texture_array.InsertNextTuple3(*mesh_polydata.GetCellData().GetArray('Texture').GetTuple(point))
+
+    for n in range(mesh_polydata.GetCellData().GetNumberOfArrays()):
+        mesh_polydata.GetCellData().RemoveArray(0)
+
+    mesh_polydata.GetCellData().AddArray(cell_texture_array)
+    mesh_polydata.Modified()
+
+    return mesh_polydata
 
 
 def get_mesh_data(mesh_file_path):
@@ -165,24 +185,41 @@ def generate_textured_files(tex_model_path, untex_ply_files_path, tex_files_path
             print(f'Generating and applying texture to {subtype_folder.name} mesh {mesh_path.stem}...')
             mesh_texture = generate_mesh_texture(tex_mean=texture_mean, tex_pcs=texture_pcs, tex_var=texture_var)
 
-            write_texture_on_vtp_mesh(mesh_polydata=mesh_vtp, mesh_texture=mesh_texture)
+            textured_mesh = write_texture_on_vtp_mesh(mesh_polydata=mesh_vtp, mesh_texture=mesh_texture)
 
             textured_mesh_path = create_mesh_directory(tex_files_path=tex_files_path,
                                                        subtype_name=subtype_folder.name, mesh_name=mesh_path.stem)
-            export_vtp_mesh(mesh_polydata=mesh_vtp, mesh_vtp_path=textured_mesh_path)
+            export_vtp_mesh(mesh_polydata=textured_mesh, mesh_vtp_path=textured_mesh_path)
             print(f'Exported {subtype_folder.name} mesh {textured_mesh_path.stem} with texture in .vtp format '
                   f'at {str(textured_mesh_path)}.\n')
 
 
 if __name__ == '__main__':
 
-    texture_model_path = Path('./texture_model_13151_pts.h5')
+    use_case = 'batch'  # 'single'
 
-    untextured_ply_format_files_path = \
-        Path(r"C:\Users\franz\Documents\work\projects\arp\data\synthetic_data\synthetic_data_original_untextured_unclipped_ply")
+    if use_case == 'batch':
+        texture_model_path = Path('./texture_model_13151_pts.h5')
 
-    textured_files_path = \
-        Path(r"C:\Users\franz\Documents\work\projects\arp\data\synthetic_data\synthetic_data_original_textured_unclipped_vtp_paraview")
+        untextured_ply_format_files_path = \
+            Path(r"C:\Users\franz\Documents\work\projects\arp\data\synthetic_data\synthetic_data_original_untextured_unclipped_ply")
 
-    generate_textured_files(tex_model_path=texture_model_path, untex_ply_files_path=untextured_ply_format_files_path,
-                            tex_files_path=textured_files_path)
+        textured_files_path = \
+            Path(r"C:\Users\franz\Documents\work\projects\arp\data\synthetic_data\synthetic_data_original_textured_unclipped_vtp_paraview")
+
+        generate_textured_files(tex_model_path=texture_model_path, untex_ply_files_path=untextured_ply_format_files_path,
+                                tex_files_path=textured_files_path)
+
+    elif use_case == 'single':
+        texture_model_path = Path('./texture_model_13151_pts.h5')
+        mesh_path = Path(r"C:\Users\franz\Documents\work\projects\arp\data\synthetic_data\synthetic_data_original_untextured_unclipped_ply\metopic\metopic_inst_061.ply")
+        texture_mean, texture_pcs, texture_var = load_texture_model(texture_model_path)
+        mesh_points, mesh_cells = get_mesh_data(mesh_path)
+        mesh_vtp = create_vtp_mesh(mesh_points=mesh_points, mesh_cells=mesh_cells)
+        mesh_texture_info = generate_mesh_texture(tex_mean=texture_mean, tex_pcs=texture_pcs, tex_var=texture_var)
+        textured_mesh = write_texture_on_vtp_mesh(mesh_polydata=mesh_vtp, mesh_texture=mesh_texture_info)
+        textured_mesh_path = create_mesh_directory(tex_files_path=mesh_path.parent,
+                                                   subtype_name=mesh_path.parent.name, mesh_name=mesh_path.stem)
+        export_vtp_mesh(mesh_polydata=textured_mesh, mesh_vtp_path=textured_mesh_path)
+        print(f'Exported {mesh_path.parent.name} mesh {textured_mesh_path.stem} with texture in .vtp format '
+              f'at {str(textured_mesh_path)}.\n')
