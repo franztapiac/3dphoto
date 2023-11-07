@@ -3,6 +3,7 @@ from pathlib import Path
 import pyvista as pv
 from vtkmodules.util import numpy_support
 from datetime import datetime
+from tools.DataSetGraph import WritePolyData
 
 
 def get_landmark_coordinates(landmarks_vtp):
@@ -42,3 +43,6 @@ def export_landmarks(landmarks, mesh_file_path: Path, landmark_placement, croppi
 
     print(f'Exporting the landmarks to {str(landmark_ply_path.absolute())}.')
     landmark_coordinates_ply.save(str(landmark_ply_path))
+
+    vtp_path = landmark_ply_path.parent / (landmark_ply_path.stem + '.vtp')
+    WritePolyData(landmarks, str(vtp_path))
