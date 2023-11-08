@@ -118,6 +118,30 @@ def AddArraysToLandmarks(landmarks, landmark_names=None):
     landmarks.GetPointData().AddArray(nameArray)
     return landmarks
 
+def GetLandmarkNames(landmarks):
+    arr = landmarks.GetPointData().GetAbstractArray('LandmarkName')
+    return np.array([arr.GetValue(x) for x in range(arr.GetNumberOfValues())])
+
+def SelectLandmarks(landmarks, selection):
+    l = vtk.vtkPolyData()
+    l.DeepCopy(landmarks)
+    landmarks = l
+
+    landmark_names = GetLandmarkNames(landmarks)
+    if not np.all(np.isin(selection, landmark_names)):
+        raise ValueError('Incorrect landmark selection! Please check input.')
+
+    ids = [int(np.where(landmark_names == x)[0]) for x in selection]
+    out_landmarks = vtk.vtkPolyData()
+    out_landmarks.SetPoints(vtk.vtkPoints())
+    for id in ids:
+        out_landmarks.GetPoints().InsertNextPoint(landmarks.GetPoints().GetPoint(id))
+    #now add the landmark name array and color
+    out_landmarks = AddArraysToLandmarks(out_landmarks, landmark_names=selection)
+    return out_landmarks
+
+def DefaultLandmarkNames():
+    return ["TRAGION_RIGHT","SELLION","TRAGION_LEFT","EURYON_RIGHT","EURYON_LEFT","FRONTOTEMPORALE_RIGHT","FRONTOTEMPORALE_LEFT","VERTEX","NASION","GLABELLA","OPISTHOCRANION","GNATHION","STOMION","ZYGION_RIGHT","ZYGION_LEFT","GONION_RIGHT","GONION_LEFT","SUBNASALE","ENDOCANTHION_RIGHT","ENDOCANTHION_LEFT","EXOCANTHION_RIGHT","EXOCANTHION_LEFT","ALAR_RIGHT","ALAR_LEFT","NASALE_TIP","SUBLABIALE","UPPER_LIP"]
 
 def GetLandmarkNames(landmarks):
     arr = landmarks.GetPointData().GetAbstractArray('LandmarkName')
@@ -327,8 +351,7 @@ def CutMeshWithCranialBaseLandmarks(mesh, landmarkCoords, extraSpace=0, useTwoLa
 
     return cutter.GetOutput()
 
-
-def ComputeVolume(image, projected=False):
+def ComputeVolume(image, projected = False):
     filter = vtk.vtkCleanPolyData()
     filter.SetInputData(image)
     filter.Update()
@@ -398,8 +421,7 @@ def WrapSphere(inputMesh):
     inputMesh = wrappedSphere
     return inputMesh
 
-
-def vtkPolyDataToNumpy(polydata, arrayName=None):
+def vtkPolyDataToNumpy(polydata,arrayName =  None):
     if not arrayName:
         numpyArray = numpy_support.vtk_to_numpy(polydata.GetPoints().GetData())
     else:

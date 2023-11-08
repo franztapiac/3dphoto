@@ -10,15 +10,14 @@ import numpy as np
 import shelve
 import warnings
 
-# filter the scikit learn warning about pickled models
-warnings.filterwarnings("ignore", category=UserWarning)
+#filter the scikit learn warning about pickled models
+warnings.filterwarnings("ignore", category = UserWarning)
 
 # This prevents VTK from opening windows with warnings. It may be useful to remove for debugging purposes
 vtk.vtkObject.GlobalWarningDisplayOff()
 
 
-def CreateContinuousModelOfExternalCranialSurface(inputMesh, landmarks, cutMesh=False, numberOfThetas=150,
-                                                  maskResult=False, verbose=False, reversePlane=False):
+def CreateContinuousModelOfExternalCranialSurface(inputMesh, landmarks, cutMesh = False, numberOfThetas=150, maskResult=False, verbose=False, reversePlane = False):
     """
     Creates a continuous model of the external cranial surface from the bone model segmented from the CT image.
     Landmarking is done via raycasting in spherical coordinates
@@ -106,9 +105,8 @@ def CreateContinuousModelOfExternalCranialSurface(inputMesh, landmarks, cutMesh=
     npLandmarks = np.zeros((landmarks.GetNumberOfPoints(), 3), dtype=np.float64)
     npTemplateLandmarks = np.zeros((templateLandmarks.GetNumberOfPoints(), 3), dtype=np.float64)
     for p in range(landmarks.GetNumberOfPoints()):
-        npLandmarks[p, :] = landmarks.GetPoint(p)
-        npTemplateLandmarks[p, :] = templateLandmarks.GetPoint(p)
-
+        npLandmarks[p,:] = landmarks.GetPoint(p)
+        npTemplateLandmarks[p,:] = templateLandmarks.GetPoint(p)
     center = np.mean(npLandmarks, axis=0)
 
     R, t = RegisterPointClouds(npLandmarks, npTemplateLandmarks, scaling=False)
@@ -145,28 +143,28 @@ def CreateContinuousModelOfExternalCranialSurface(inputMesh, landmarks, cutMesh=
     ## New mesh
     sampledMesh = vtk.vtkPolyData()
     sampledMesh.SetPoints(vtk.vtkPoints())
-
+    
     ## Calculating the cutting plane
     landmarkCoords = np.zeros([landmarks.GetNumberOfPoints(), 3], dtype=np.float32)
     for p in range(landmarks.GetNumberOfPoints()):
-        landmarkCoords[p, :] = np.array(landmarks.GetPoint(p))
+        landmarkCoords[p,:] = np.array(landmarks.GetPoint(p))
 
     # Normal to plane
-    dorsumCoords = (landmarkCoords[1, :] + landmarkCoords[2, :]) / 2.0  # Center of dorsum sellae
-    midCoords = (landmarkCoords[0, :] + landmarkCoords[3, :]) / 2.0  # Center of nasion and opisthion
+    dorsumCoords = (landmarkCoords[1, :] + landmarkCoords[2, :]) / 2.0 # Center of dorsum sellae
+    midCoords = (landmarkCoords[0, :] + landmarkCoords[3, :]) / 2.0 # Center of nasion and opisthion
 
-    dorsumVect = landmarkCoords[1, :] - landmarkCoords[2, :]  # Vector of dorsum sellae
-    dorsumVect = dorsumVect / np.sqrt(np.sum(dorsumVect ** 2))
+    dorsumVect = landmarkCoords[1, :] - landmarkCoords[2, :] # Vector of dorsum sellae
+    dorsumVect = dorsumVect / np.sqrt(np.sum(dorsumVect**2))
 
-    p0 = landmarkCoords[0, :] + 10 * dorsumVect  # Points parallel to dorsum sellae at the sides of the nasion
+    p0 = landmarkCoords[0, :] + 10 * dorsumVect # Points parallel to dorsum sellae at the sides of the nasion
     p1 = landmarkCoords[0, :] - 10 * dorsumVect
-    p2 = landmarkCoords[3, :]  # opisthion
+    p2 = landmarkCoords[3, :] # opisthion
 
     # Normal to the plane nasion - opisthion
     v0 = p2 - p1
     v1 = p2 - p0
     n = np.cross(v0, v1)
-    n = n / np.sqrt(np.sum(n ** 2))
+    n = n / np.sqrt(np.sum(n**2))
 
     plane = vtk.vtkPlane()
     if not reversePlane:
@@ -188,8 +186,7 @@ def CreateContinuousModelOfExternalCranialSurface(inputMesh, landmarks, cutMesh=
     thetaDistance = np.pi / (numberOfThetas - 1.0)
 
     rayEnd = np.zeros([3], dtype=np.float64)
-    radius = np.sqrt((meshBounds[1] - meshBounds[0]) ** 2 + (meshBounds[3] - meshBounds[2]) ** 2 + (
-                meshBounds[5] - meshBounds[4]) ** 2)
+    radius = np.sqrt( (meshBounds[1] - meshBounds[0])**2 + (meshBounds[3] - meshBounds[2])**2 + (meshBounds[5] - meshBounds[4])**2 )
     intersectedPoint = np.zeros([3], dtype=np.float64)
 
     ## Adding all arrays with one component
@@ -214,46 +211,45 @@ def CreateContinuousModelOfExternalCranialSurface(inputMesh, landmarks, cutMesh=
 
     triangle = vtk.vtkGenericCell()
 
-    nasion = landmarkCoords[0, :]
-    dist = np.linalg.norm(nasion - center)  # Distance nasion to center
+    nasion = landmarkCoords[0,:]
+    dist = np.linalg.norm(nasion - center) # Distance nasion to center
 
-    nasionSinTheta = (nasion[2] - center[2]) / dist
-    nasionSinPhi = (nasion[1] - center[1]) / (dist * np.sqrt((1 - nasionSinTheta ** 2)))
+    nasionSinTheta =  (nasion[2] - center[2])/dist
+    nasionSinPhi = (nasion[1] - center[1]) / (dist * np.sqrt( (1 - nasionSinTheta**2) ) )
 
-    opisthion = landmarkCoords[3, :]
-    dist = np.linalg.norm(opisthion - center)  # Distance nasion to center
+    opisthion = landmarkCoords[3,:]
+    dist = np.linalg.norm(opisthion - center) # Distance nasion to center
 
-    opisthionSinTheta = (opisthion[2] - center[2]) / dist
-    opisthionSinPhi = (opisthion[1] - center[1]) / (dist * np.sqrt((1 - opisthionSinTheta ** 2)))
+    opisthionSinTheta =  (opisthion[2] - center[2])/dist
+    opisthionSinPhi = (opisthion[1] - center[1]) / (dist * np.sqrt( (1 - opisthionSinTheta**2) ) )
 
     for latitude in range(numberOfThetas):
 
         if verbose:
             print('Sampling spherical space: {:05d}/{:05d}'.format(latitude, numberOfThetas), end='\r')
 
-        theta = np.pi / 2 - latitude * np.pi / (numberOfThetas - 1)
+        theta = np.pi/2 - latitude*np.pi/(numberOfThetas-1)
 
-        thetaLongitude = 2.0 * np.pi * np.cos(theta)
+        thetaLongitude = 2.0*np.pi*np.cos(theta)
         nPointsAtTheta = int(np.floor(thetaLongitude / thetaDistance))
 
         for longitude in range(nPointsAtTheta):
             if nPointsAtTheta != 1:
-                phi = -np.pi + longitude * 2 * np.pi / (nPointsAtTheta - 1)
+                phi = -np.pi + longitude*2*np.pi / (nPointsAtTheta - 1)
             else:
                 phi = 0
 
-            distToNasion = (nasionSinPhi - np.sin(phi)) ** 2
-            distToOpisthion = (opisthionSinPhi - np.sin(phi)) ** 2
 
-            limitTheta = nasionSinTheta * distToOpisthion / (
-                        distToNasion + distToOpisthion) + opisthionSinTheta * distToNasion / (
-                                     distToNasion + distToOpisthion)
+            distToNasion = (nasionSinPhi-np.sin(phi))**2
+            distToOpisthion = (opisthionSinPhi-np.sin(phi))**2
+            
+            limitTheta = nasionSinTheta * distToOpisthion/(distToNasion + distToOpisthion) + opisthionSinTheta * distToNasion/(distToNasion + distToOpisthion)
 
             if not maskResult or np.sin(theta) >= limitTheta:
-
-                rayEnd[0] = center[0] + radius * np.cos(phi) * np.cos(theta)
-                rayEnd[1] = center[1] + radius * np.sin(phi) * np.cos(theta)
-                rayEnd[2] = center[2] + radius * np.sin(theta)
+            
+                rayEnd[0] = center[0] + radius*np.cos(phi)*np.cos(theta)
+                rayEnd[1] = center[1] + radius*np.sin(phi)*np.cos(theta)
+                rayEnd[2] = center[2] + radius*np.sin(theta)
 
                 if obbTree.IntersectWithLine(center, rayEnd, intersectionPoints, intersectionCellIds):
                     closestDist = 0
@@ -261,10 +257,7 @@ def CreateContinuousModelOfExternalCranialSurface(inputMesh, landmarks, cutMesh=
                     for p in range(intersectionPoints.GetNumberOfPoints()):
 
                         intersectionPoints.GetPoint(p, intersectedPoint)
-                        dist = np.sqrt(
-                            (center[0] - intersectedPoint[0]) ** 2 + (center[1] - intersectedPoint[1]) ** 2 + (
-                                        center[2] - intersectedPoint[2]) ** 2)
-
+                        dist = np.sqrt((center[0] - intersectedPoint[0])**2 + (center[1] - intersectedPoint[1])**2 + (center[2] - intersectedPoint[2])**2 )
                         if dist > closestDist:
                             closestDist = dist
                             closestId = p
@@ -278,9 +271,9 @@ def CreateContinuousModelOfExternalCranialSurface(inputMesh, landmarks, cutMesh=
                     subId = vtk.reference(0)
                     cellId = cellLocator.FindCell(intersectedPoint, 0, triangle, pCoords, weights)
 
-                    # Calculating the cartesian coordinates for the spherical map
+                    #Calculating the cartesian coordinates for the spherical map
                     angle = phi
-                    rho = float(latitude) / (numberOfThetas - 1)
+                    rho = float(latitude)/(numberOfThetas-1)
 
                     x = rho * np.cos(phi)
                     y = rho * np.sin(phi)
@@ -293,11 +286,10 @@ def CreateContinuousModelOfExternalCranialSurface(inputMesh, landmarks, cutMesh=
                     if toDraw:
                         sampledMesh.GetPoints().InsertNextPoint(x, y, 0)
 
-                        for arrayId in range(len(arrayList) - 1):
-
+                        for arrayId in range(len(arrayList)-1):
+                    
                             if cellId >= 0:
-                                arrayList[arrayId].InsertNextTuple1(
-                                    inputMesh.GetCellData().GetArray(arrayList[arrayId].GetName()).GetTuple1(cellId))
+                                arrayList[arrayId].InsertNextTuple1(inputMesh.GetCellData().GetArray(arrayList[arrayId].GetName()).GetTuple1(cellId))
                             else:
                                 arrayList[arrayId].InsertNextTuple1(0)
 
@@ -680,70 +672,68 @@ def AlignPatientToTemplate(surface, landmarks):
     templateLandmarks_forRegisitration = DataSet.ReadPolyData(EURYON_CRANIALBASE_LANDMARKS_PATH)
     template_space_landmarks = DataSet.ReadPolyData(GLABELLA_CRANIALBASE_LANDMARKS_PATH)
 
-    # select some landmarks?
-    landmarks_we_want = ["SELLION", "SUBNASALE", "TRAGION_RIGHT", "TRAGION_LEFT",
-                         "ENDOCANTHION_RIGHT", "ENDOCANTHION_LEFT",
-                         "VERTEX", 'OPISTHOCRANION']
-    selected_templateLandmarks_forRegisitration = SelectLandmarks(templateLandmarks_forRegisitration, landmarks_we_want)
+
+    # select some landmarks? 
+    landmarks_we_want = ["SELLION","SUBNASALE","TRAGION_RIGHT","TRAGION_LEFT",
+                     "ENDOCANTHION_RIGHT","ENDOCANTHION_LEFT",
+                     "VERTEX", 'OPISTHOCRANION']
+    selected_templateLandmarks_forRegisitration= SelectLandmarks(templateLandmarks_forRegisitration, landmarks_we_want)
     landmarks_forregistration = SelectLandmarks(landmarks, landmarks_we_want)
 
-    alignment_transform = RegisterPatientToTemplate(landmarks_forregistration,
-                                                    selected_templateLandmarks_forRegisitration)
+    alignment_transform = RegisterPatientToTemplate(landmarks_forregistration, selected_templateLandmarks_forRegisitration)
     transform = sitk.CompositeTransform([alignment_transform])
 
-    # we may need a quick ICP to match the centers
+    #we may need a quick ICP to match the centers
     template_space_photo = ApplyTransform(surface, transform)
     template_space_patient_landmarks = ApplyTransform(landmarks, transform)
 
     #### CENTERING REGISTRATION ####
     # compute the transform to center the nasion - tragia plane to the template plane
-    landmarks_we_want = ["SELLION", "TRAGION_RIGHT", "TRAGION_LEFT"]
-    selected_template_landmarks_forregistration = SelectLandmarks(templateLandmarks_forRegisitration, landmarks_we_want)
+    landmarks_we_want = ["SELLION","TRAGION_RIGHT","TRAGION_LEFT"]
+    selected_template_landmarks_forregistration= SelectLandmarks(templateLandmarks_forRegisitration, landmarks_we_want)
     landmarks_forregistration = SelectLandmarks(template_space_patient_landmarks, landmarks_we_want)
     # figure out the scaling
-    centering_transform = RegisterPatientToTemplate(landmarks_forregistration,
-                                                    selected_template_landmarks_forregistration)
+    centering_transform = RegisterPatientToTemplate(landmarks_forregistration, selected_template_landmarks_forregistration)
     rotation = np.eye(3)
     centering_transform.SetMatrix(rotation.ravel())
     transform.AddTransform(centering_transform)
 
-    # move the template stuff
+    #move the template stuff
     template_space_photo = ApplyTransform(template_space_photo, centering_transform)
     template_space_patient_landmarks = ApplyTransform(template_space_patient_landmarks, centering_transform)
 
-    #### NOW MAKE A GOOD EXTERNAL HEAD SURFACE ####
-    # make it a binary image
-    template_space_mesh = CreateContinuousModelOfExternalCranialSurface(template_space_photo, template_space_landmarks,
-                                                                        cutMesh=False, maskResult=False)
 
-    # smooth it!
+    #### NOW MAKE A GOOD EXTERNAL HEAD SURFACE ####
+    #make it a binary image
+    template_space_mesh = CreateContinuousModelOfExternalCranialSurface(template_space_photo, template_space_landmarks, cutMesh=False, maskResult=False)
+
+    #smooth it!
     template_space_mesh = SmoothMesh(template_space_mesh)
-    # cut it!
-    template_space_mesh = CutMeshWithCranialBaseLandmarks(template_space_mesh,
-                                                          vtkPolyDataToNumpy(template_space_landmarks), extraSpace=120)
+    #cut it!
+    template_space_mesh = CutMeshWithCranialBaseLandmarks(template_space_mesh, vtkPolyDataToNumpy(template_space_landmarks), extraSpace=120)
 
     #### SCALING ####
-    # figure out the scale, based on the average distance from the cranial base
+    #figure out the scale, based on the average distance from the cranial base
     cutting_landmarks = DataSet.ReadPolyData(CUTTING_LANDMARKS_PATH)
     cut_patient = CutMeshWithCranialBaseLandmarks(template_space_mesh, vtkPolyDataToNumpy(cutting_landmarks))
 
-    # compute the scale
-    scale = (TEMPLATE_VOLUME / ComputeVolume(cut_patient)) ** (1 / 3)
+    #compute the scale
+    scale = (TEMPLATE_VOLUME / ComputeVolume(cut_patient)) ** (1/3)
     scaling_transform = sitk.AffineTransform(3)
     scaling_transform.SetIdentity()
     rotation = np.eye(3) * scale
     scaling_transform.SetMatrix(rotation.ravel())
-    center = vtkPolyDataToNumpy(selected_template_landmarks_forregistration).mean(axis=0).astype(np.float64)
+    center = vtkPolyDataToNumpy(selected_template_landmarks_forregistration).mean(axis = 0).astype(np.float64)
     scaling_transform.SetCenter(center)
     transform.AddTransform(scaling_transform)
     template_space_mesh = ApplyTransform(template_space_mesh, scaling_transform)
     template_space_patient_landmarks = ApplyTransform(template_space_patient_landmarks, scaling_transform)
 
     transform = sitk.CompositeTransform([scaling_transform, centering_transform, alignment_transform])
-    transform.FlattenTransform()  # this allows us to save it out
+    transform.FlattenTransform() # this allows us to save it out
 
     #### TRANSFORM IS DONE, MOVE IT BACK INTO PATIENT SPACE ####
-    # back into template space and smooth again
+    #back into template space and smooth again
     patient_space_photo = ApplyTransform(template_space_mesh, transform.GetInverse())
 
     # Calculating normals to improve visualization
@@ -759,7 +749,6 @@ def AlignPatientToTemplate(surface, landmarks):
 
     # smoothed mesh is in patient space!
     return output_mesh, transform
-
 
 def CreateSphericalMapFromSurfaceModel(inputMesh, numberOfThetas=150, maskResult=True):
     """
@@ -1035,7 +1024,6 @@ def GenerateSphericalMapOfData(externalSurface, subjectToTemplateTransform):
     coordsImage = CreateVectorImageFromBullsEyeMesh(spherical_model)
     return coordsImage
 
-
 def RemoveScale(subjectData, indices):
     image_array = sitk.GetArrayFromImage(subjectData)[indices[:, 0], indices[:, 1], :]
 
@@ -1051,19 +1039,18 @@ def CalculateFeaturesFromCoefficients(subject_data, coef, std_model, fun):
     Normalize the coefficients calculated from the PCA model
     Use these features to compute HSA index or fit a CRS model
     '''
-    feature_data = pd.DataFrame(columns=subject_data.filter(like='PC').columns.values)
-    for idx, column in enumerate(subject_data.filter(like='PC').columns.values):
+    feature_data = pd.DataFrame(columns = subject_data.filter(like = 'PC').columns.values)
+    for idx,column in enumerate(subject_data.filter(like = 'PC').columns.values):
         data = subject_data[column].astype(float).to_numpy()
         age = subject_data['Age'].astype(float).astype(int).to_numpy()
         sex = subject_data['Sex'].astype(float).astype(int).to_numpy()
         mean = fun(age, sex, *coef[idx, :])[0]
-        std = std_model[idx].predict(np.stack([age, sex], axis=1).reshape(-1, 2))
+        std = std_model[idx].predict(np.stack([age,sex], axis = 1).reshape(-1,2))
         # feature_data = pd.concat([feature_data, pd.DataFrame(data = (data - mean) / std, columns = [column])],axis = 1, ignore_index=True)
         feature_data[column] = (data - mean) / std
     feature_data = feature_data.copy()
-    feature_data[['Age', 'Sex']] = subject_data[['Age', 'Sex']].values
+    feature_data[['Age','Sex']] = subject_data[['Age','Sex']].values
     return feature_data
-
 
 def CalculateModelCoeffients(subjectData, model, constrainCoefficients=True, stdRange=3):
     """
@@ -1105,31 +1092,25 @@ def CalculateModelCoeffients(subjectData, model, constrainCoefficients=True, std
 
     return subjectCoefficients.reshape((1, -1))
 
+def ComputeResults(features, variance, num_comps = 35):
+    #now compute the HSA index
+    statisticalDistance = np.sum(np.abs(features.filter(like = 'PC').iloc[:,:num_comps].values * variance[:num_comps]), axis = 1) / np.sum(variance[:num_comps])
 
-def ComputeResults(features, variance, num_comps=35):
-    # now compute the HSA index
-    statisticalDistance = np.sum(np.abs(features.filter(like='PC').iloc[:, :num_comps].values * variance[:num_comps]),
-                                 axis=1) / np.sum(variance[:num_comps])
-
-    with shelve.open(os.path.join(CLASSIFIER_DIR, 'SVM_Trained_Data_Final'), 'r') as file:
+    with shelve.open(os.path.join(CLASSIFIER_DIR,'SVM_Trained_Data_Final'), 'r') as file:
         # selector= file['selector']
         feature_indices = np.array(file['feature_indices'])
         clf = file['clf']
         scaler = file['scaler']
         file.close()
 
-    features_transformed = scaler.transform(features.iloc[:, feature_indices].values)
-    return 100 * clf.predict_proba(features_transformed)[0][1], statisticalDistance[0]
-
+    features_transformed = scaler.transform(features.iloc[:,feature_indices].values)
+    return 100*clf.predict_proba(features_transformed)[0][1], statisticalDistance[0]
 
 def Arcsinh(age, sex, a, b, c, d, e, g):
-    y = a + b * sex + (c) * np.arcsinh(d * age) + e * age + g * age * sex
-    return y, [1, sex, np.arcsinh(d * age),
-               c * (age + d * age ** 2 / np.sqrt(1 + d ** 2 * age ** 2)) / (d * age + np.sqrt(1 + d ** 2 * age ** 2)),
-               age, age * sex]
+    y = a + b*sex + (c)* np.arcsinh(d*age) + e*age + g*age*sex
+    return y, [1, sex, np.arcsinh(d*age), c*(age+d*age**2/np.sqrt(1+d**2*age**2))/(d*age+np.sqrt(1+d**2*age**2)), age, age*sex]
 
-
-def ComputeFromSphericalImage(coordsImage, age, sex, remove_scale=False):
+def ComputeFromSphericalImage(coordsImage, age, sex, remove_scale = False):
     atlasPath = os.path.join(MODEL_DIR, 'PCAModel')
     with shelve.open(atlasPath, 'r') as atlasInformation:
         indices = atlasInformation['indices']
@@ -1138,7 +1119,7 @@ def ComputeFromSphericalImage(coordsImage, age, sex, remove_scale=False):
     # extract subject data
     if remove_scale:
         coordsImage, _ = RemoveScale(coordsImage, indices)
-    subjectData = sitk.GetArrayFromImage(coordsImage)[indices[:, 0], indices[:, 1], :].ravel()
+    subjectData = sitk.GetArrayFromImage(coordsImage)[indices[:,0], indices[:,1],:].ravel()
     coefficients = CalculateModelCoeffients(subjectData, model, constrainCoefficients=False)
 
     ####now let's normalize the PC coefficients
@@ -1150,12 +1131,12 @@ def ComputeFromSphericalImage(coordsImage, age, sex, remove_scale=False):
         mean_coef = parametersModel['mean_params']
         std_model = parametersModel['std_model']
         variance_norm_only = parametersModel['variance']
-    cols = ['PC%s' % x for x in np.arange(1, len(coefficients[0]) + 1)]
-    df = pd.DataFrame(data=coefficients, columns=cols)
-    if type(sex) == str:
-        sex = int(sex == 'M')
+    cols = ['PC%s'%x for x in np.arange(1,len(coefficients[0])+1)]
+    df = pd.DataFrame(data = coefficients, columns = cols)
+    if type(sex)==str:
+        sex = int(sex=='M')
     df['Age'] = age
     df['Sex'] = sex
     df = CalculateFeaturesFromCoefficients(df, mean_coef, std_model, Arcsinh)
 
-    return ComputeResults(df, variance_norm_only, num_comps=len(variance_norm_only))
+    return ComputeResults(df, variance_norm_only, num_comps = len(variance_norm_only))
