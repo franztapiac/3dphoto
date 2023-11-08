@@ -3,7 +3,7 @@ import pandas as pd
 from tools.LandmarkingUtils import CutMeshWithCranialBaseLandmarks, vtkPolyDataToNumpy, SelectLandmarks, ComputeVolume
 import tools.DataSetGraph as DataSet
 import vtk
-from vtk.util import numpy_support
+from vtkmodules.util import numpy_support
 import SimpleITK as sitk
 import os
 import numpy as np
