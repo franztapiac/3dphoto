@@ -6,18 +6,19 @@ franz.tapia-chaca@outlook.com
 ## <u>Content</u>
 Franz's work with the HSA index spanned 4 categories:
 1. Appending RGB texture to synthetic meshes
-2. Calculating the HSA on synthetic and patient meshes
-3. Evaluating the landmarking prediction
-4. Converting mesh files from .ply to .vtp format
+2. Expanding meshes
+3. Calculating the HSA on synthetic and patient meshes
+4. Evaluating the landmarking prediction
+5. Converting mesh files from .ply to .vtp format
 
 Each category has its own subdirectory, and how the corresponding scripts work is 
 explained below.
 
-## <u>A) Appending RGB texture to synthetic meshes</u>
+## <u>1) Appending RGB texture to synthetic meshes</u>
 
 Within this folder, there is 1 script:
 
-### 1. ``texture_generator.py``
+### a) ``texture_generator.py``
 
 ![Addition of texture to synthetic mesh](../diagrams/texture_writing.png)
 
@@ -38,7 +39,21 @@ And then for each mesh:
 
 To run the script, define the three paths at the main call of the script.
 
-## <u>HSA calculation</u>
+## <u>2) Expanding meshes</u>
+
+### a) ``expand_meshes.py``
+
+**Purpose:** Expand meshes from a directory (stored in subtype subdirectories)
+to match the volume of a template mesh.
+
+Within the main module, define four things. See their definitions in the docstring of the 
+``expand_meshes()`` function.
+1. ``path_to_template``
+2. ``template_id``
+3. ``path_to_meshes_dir``
+4. ``subtypes``
+
+## <u>3) HSA calculation</u>
 
 Within this folder, there are 3 scripts, and one Excel file:
 

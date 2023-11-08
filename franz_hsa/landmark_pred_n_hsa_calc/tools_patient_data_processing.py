@@ -27,8 +27,8 @@ def get_patient_age_and_sex(db_path, patient_id, subtype_sample):
 
     # Get patient age and sex for the right '', 'pre', or 'post' sample
     for _, row in patient_rows.iterrows():
-        if row['sample'] == sample or pd.isna(row['sample']):
-            patient_age = row['age_at_imaging']
+        if row['operative_sample'] == sample or pd.isna(row['operative_sample']):
+            patient_age = row['age_at_imaging_in_days']
             patient_sex = row['sex']
 
     return patient_age, patient_sex

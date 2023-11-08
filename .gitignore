@@ -15,10 +15,8 @@
 .idea/vcs.xml
 __pycache__/__init__.cpython-39.pyc
 __pycache__/Analyze3DPhotogram.cpython-39.pyc
-franz_hsa/landmark_evaluation/__pycache__/export_landmarks.cpython-39.pyc
+franz_hsa/landmark_prediction_evaluation/__pycache__/export_landmarks.cpython-39.pyc
 tools/__pycache__/PhotoAnalysisTools.cpython-39.pyc
 tools/__pycache__/LandmarkingUtils.cpython-39.pyc
-franz_hsa/landmark_pred_n_hsa_calc/__pycache__/tools_patient_data_processing.cpython-39.pyc
-franz_hsa/landmark_pred_n_hsa_calc/__pycache__/tools_synth_data_processing.cpython-39.pyc
-franz_hsa/landmark_evaluation/__pycache__/visualise_landmarks.cpython-39.pyc
-NormativePCAModel/MaskImage.mha
+tools/__pycache__/DataSetGraph.cpython-39.pyc
+franz_hsa/appending_texture_to_synth_meshes/shape_model.h5
