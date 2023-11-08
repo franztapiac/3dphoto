@@ -20,7 +20,7 @@ Within this folder, there is 1 script:
 
 ### a) ``texture_generator.py``
 
-![Addition of texture to synthetic mesh](../diagrams/texture_writing.png)
+![Addition of texture to synthetic mesh](diagrams/texture_writing.png)
 
 With this script, we can load the synthetic meshes (constituted by 45,081 points) 
 and the texture_model.h5 published by Matthias Schaufelberger et al. 
@@ -85,11 +85,11 @@ of this script herein.
 For example, if we request for the landmarks
 ``['NASION', 'TRAGION_LEFT', 'TRAGION_RIGHT']``, we get the following output:
 
-![Landmark reduction example](../diagrams/landmark_reduction.png)
+![Landmark reduction example](diagrams/landmark_reduction.png)
 
 After creating a reduced landmark template, we can check it:
 
-![Checking landmark reduction](../diagrams/landmark_reduction_check.png)
+![Checking landmark reduction](diagrams/landmark_reduction_check.png)
 
 Finally, to use the reduced landmark template, it must be defined in ``__init__.py``.
 
@@ -165,14 +165,14 @@ Holds functions for exporting a .vtp landmarks object as a .ply landmarks file.
 This script has two options, which can be accessed by ``use_case = 1`` or ``use_case = 2``, respectively.:
 1. Visualisation of landmarks predicted by Connor's landmark prediction.
 
-![Example landmark visualisation](../diagrams/landmark_vis_example.png)
+![Example landmark visualisation](diagrams/landmark_vis_example.png)
 
 Generates a window that displays meshes with landmarks. The meshes can be those from the test set of a KDE model.
 The landmarks can be those predicted with Elkhill's landmark prediction method.
 
 2. Visualisation of landmarks manually defined by point IDs from synthetic meshes.
 
-![Landmark annotation](../diagrams/landmark_annotation.png)
+![Landmark annotation](diagrams/landmark_annotation.png)
 
 
 
@@ -213,7 +213,7 @@ Then click: File / Run to execute the script.
 ## Synthetic data processing
 
 ### ``append_subtype_to_filename.py``
-![Append subtype to filename](../diagrams/append_subtype_to_filename.png)
+![Append subtype to filename](diagrams/append_subtype_to_filename.png)
 
 See docstring in code for explanation.
 
