@@ -5,6 +5,7 @@ franz.tapia-chaca@outlook.com
 
 ## <u>Content</u>
 Franz's work with the HSA index spanned 4 categories:
+0. Cloning HSA repository (HSA v1 or HSA v2) into your computer or a server.
 1. Appending RGB texture to synthetic meshes
 2. Expanding meshes
 3. Calculating the HSA on synthetic and patient meshes
@@ -13,6 +14,17 @@ Franz's work with the HSA index spanned 4 categories:
 
 Each category has its own subdirectory, and how the corresponding scripts work is 
 explained below.
+
+## <u>0) Cloning HSA repository (HSA v1 or HSA v2) into your computer or server</u>
+
+Clone from franz's fork
+
+Move the HSA v2 files into the parent repository directory
+
+Move the HSA v1 files into parent/franz_hsa/hsa_v1.
+
+You can now run either HSA model, selecting "1" for HSA v1 and "2" for HSA v2 
+in``hsa_execution_parameters.xlsx``.
 
 ## <u>1) Appending RGB texture to synthetic meshes</u>
 
