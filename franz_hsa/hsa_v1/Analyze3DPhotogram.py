@@ -41,6 +41,7 @@ def ComputeHSAandRiskScore(image, landmarks, age, sex, verbose = True):
         age: age of patient in days
         sex: 0 for female, 1 for male
     '''
+    print('Within ComputeHSA v1')
     #now, compute the HSA index and risk score!
     if verbose:
         print('Aligning image to template...')
