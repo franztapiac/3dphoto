@@ -4,10 +4,10 @@ import sys
 current_file_str_path = os.path.abspath(__file__)
 repo_root_str_path = Repo(current_file_str_path, search_parent_directories=True).git.rev_parse("--show-toplevel")
 sys.path.append(repo_root_str_path)
-from Analyze3DPhotogram import PlaceLandmarks, ComputeHSAandRiskScore, ReadImage
 import datetime
 from franz_hsa.landmark_evaluation.export_landmarks import export_landmarks
 from franz_hsa.landmark_evaluation.visualise_landmarks import load_landmark_points
+from numpy import isnan
 import pandas as pd
 from pathlib import Path
 import random
@@ -51,6 +51,7 @@ def export_to_excel(hsa_indices, output_path, hsa_exec_params):
 def define_hsa_score_storage_path(hsa_execution_params, exp_index):
 
     time_stamp = datetime.datetime.now().strftime("%m%d;%H%M")
+    hsa_model = hsa_execution_params['hsa_model']
     data_type = hsa_execution_params['data_type']
     sub_data_type = hsa_execution_params['sub_data_type']
     landmark_placement = hsa_execution_params['landmark_placement']
@@ -61,11 +62,11 @@ def define_hsa_score_storage_path(hsa_execution_params, exp_index):
             texture_state = 'textured'
         else:
             texture_state = 'untextured'
-        hsa_scores_file_path = dir_to_store_hsa_results / f'{time_stamp}_hsa_indices_exp_{exp_index}_' \
+        hsa_scores_file_path = dir_to_store_hsa_results / f'{time_stamp}_hsa_v{hsa_model}_indices_exp_{exp_index}_' \
                                                           f'{data_type}_data_{sub_data_type}_{texture_state}_' \
                                                           f'{num_landmarks}_{landmark_placement}_landmarks.xlsx'
     else:  # data_type = 'patient'
-        hsa_scores_file_path = dir_to_store_hsa_results / f'{time_stamp}_hsa_indices_{data_type}_data' \
+        hsa_scores_file_path = dir_to_store_hsa_results / f'{time_stamp}_hsa_v{hsa_model}_indices_{data_type}_data' \
                                                           f'_{sub_data_type}_{num_landmarks}_{landmark_placement}_' \
                                                           f'landmarks.xlsx'
 
@@ -248,6 +249,10 @@ def load_hsa_exec_parameters(params_db_path, hsa_exp_index):
     hsa_exec_params_db = pd.read_excel(params_db_path, index_col=0)  # index_col = 0 s.t. hsa_exp_index = df index
     hsa_exec_params = hsa_exec_params_db.loc[hsa_exp_index].to_dict()
 
+    if isnan(hsa_exec_params['hsa_model']):
+        raise Exception('You must enter an hsa_model in hsa_execution_parameters: '
+                        'either 1 (before metopic update) or 2 (for metopic update).')
+
     if ',' in hsa_exec_params['included_subtypes']:
         hsa_exec_params['included_subtypes'] = hsa_exec_params['included_subtypes'].split(', ')
 
@@ -261,8 +266,13 @@ if __name__ == '__main__':
     dir_to_store_hsa_results = repo_root_path / 'franz_hsa/hsa_output'
 
     # Define your experiment index and where to store the exported data
-    experiment_index = 14
+    experiment_index = 13
     hsa_execution_parameters = load_hsa_exec_parameters(params_db_path=hsa_exec_params_db_path,
                                                         hsa_exp_index=experiment_index)
+    if hsa_execution_parameters['hsa_model'] == 1:
+        from franz_hsa.hsa_v1.Analyze3DPhotogram import PlaceLandmarks, ComputeHSAandRiskScore, ReadImage
+    else:  # 2
+        from Analyze3DPhotogram import PlaceLandmarks, ComputeHSAandRiskScore, ReadImage
+
     # Execute the HSA model
     execute_hsa_by_params(hsa_execution_parameters, experiment_index)

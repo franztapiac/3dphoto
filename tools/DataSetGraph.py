@@ -4,10 +4,11 @@ import numpy as np
 import SimpleITK as sitk
 from os import path
 from pathlib import Path
-from vtkmodules.util.numpy_support import vtk_to_numpy
+from vtk.util.numpy_support import vtk_to_numpy
 from torch_geometric.data import Dataset
 from torch_geometric.data import Data
 import torch
+
 
 def ReadPolyData(filename):
     if filename.endswith('.vtk'):
@@ -17,6 +18,7 @@ def ReadPolyData(filename):
     reader.SetFileName(filename)
     reader.Update()
     return reader.GetOutput()
+
 
 def WritePolyData(data, filename):
     if filename.endswith('.vtk'):
@@ -30,6 +32,7 @@ def WritePolyData(data, filename):
     writer.Update()
     return
 
+
 def LoadOBJFile(inputFilePath):
     reader = vtk.vtkOBJReader()
     reader.SetFileName(inputFilePath)
@@ -37,9 +40,9 @@ def LoadOBJFile(inputFilePath):
     mesh = reader.GetOutput()
     tcoords = mesh.GetPointData().GetTCoords()
 
-    image_file =inputFilePath.replace('.obj','.bmp') 
+    image_file = inputFilePath.replace('.obj', '.bmp')
     if not path.isfile(image_file):
-        image_file =inputFilePath.replace('.obj','.jpg') 
+        image_file = inputFilePath.replace('.obj', '.jpg')
     if not path.isfile(image_file):
         raise ValueError("Texture file not found!")
     timage = sitk.ReadImage(image_file)
@@ -48,12 +51,12 @@ def LoadOBJFile(inputFilePath):
     textureArray.SetName('Texture')
     textureArray.SetNumberOfComponents(3)
 
-    #timage.SetSpacing((1/timage.GetHeight(),1/timage.GetWidth())) 
+    # timage.SetSpacing((1/timage.GetHeight(),1/timage.GetWidth()))
     pointarray = np.zeros((2))
     for point in range(tcoords.GetNumberOfTuples()):
         tpoint = tcoords.GetTuple(point)
-        pointarray[0] = tpoint[0] * (timage.GetSize()[0]-1)
-        pointarray[1] = (1-tpoint[1]) * (timage.GetSize()[1]-1)
+        pointarray[0] = tpoint[0] * (timage.GetSize()[0] - 1)
+        pointarray[1] = (1 - tpoint[1]) * (timage.GetSize()[1] - 1)
 
         texture = timage.GetPixel(int(pointarray[0]), int(pointarray[1]))
         textureArray.InsertNextTuple3(*texture)
@@ -86,7 +89,7 @@ def LoadOBJFile(inputFilePath):
     filter.Update()
     mesh = filter.GetOutput()
 
-    #recompute the normals, add the texture array
+    # recompute the normals, add the texture array
     filter = vtk.vtkPolyDataNormals()
     filter.SetInputData(mesh)
     filter.ComputePointNormalsOn()
@@ -97,9 +100,11 @@ def LoadOBJFile(inputFilePath):
     mesh.Modified()
     return mesh
 
+
 class PhotoLandmarkDatasetGraph(Dataset):
 
-    def __init__(self, photo_filenames, landmark_filenames, subsample_points = None,transform = None, pre_transform = None, normalize = True):
+    def __init__(self, photo_filenames, landmark_filenames, subsample_points=None, transform=None, pre_transform=None,
+                 normalize=True):
         super().__init__(None, transform, pre_transform)
         self.landmarks = landmark_filenames
         self.photos = photo_filenames
@@ -107,22 +112,22 @@ class PhotoLandmarkDatasetGraph(Dataset):
         self.num_classes = 27 * 3
         self.normalize = normalize
 
-    #checks to skip the downloading
+    # checks to skip the downloading
     @property
     def raw_file_names(self):
-        return list(zip(self.photo_filenames,self.landmark_filenames))
+        return list(zip(self.photo_filenames, self.landmark_filenames))
 
-    #checks to skip the processing
+    # checks to skip the processing
     @property
     def processed_file_names(self):
-        return list(zip(self.photo_filenames,self.landmark_filenames))
+        return list(zip(self.photo_filenames, self.landmark_filenames))
 
     def __len__(self):
         return len(self.photos)
-    
+
     def __getitem__(self, idx):
-    #torch geometric uses the "get" method instead of "getitem"
-    # def get(self, idx):
+        # torch geometric uses the "get" method instead of "getitem"
+        # def get(self, idx):
 
         image_vtp = ReadPolyData(self.photos[idx])
 
@@ -140,29 +145,32 @@ class PhotoLandmarkDatasetGraph(Dataset):
             data = normalize_data(data)
         return data
 
+
 def Scaler(t):
     ##center at 0,0,0 at divide by the vector magnitude
-    return (t - torch.mean(t, dim = 0)) / torch.mean(torch.linalg.norm(t, dim = 1))
+    return (t - torch.mean(t, dim=0)) / torch.mean(torch.linalg.norm(t, dim=1))
+
 
 def normalize_data(data):
-    #first let's unnormalize everything
+    # first let's unnormalize everything
     # data.pos = data.pos * data.norm_values
     # data.y = data.y * data.norm_values
 
-    data.norm_values = (torch.mean(data.pos, dim = 0),torch.mean(torch.linalg.norm(data.pos, dim = 1)))
-    #first the landmarks
+    data.norm_values = (torch.mean(data.pos, dim=0), torch.mean(torch.linalg.norm(data.pos, dim=1)))
+    # first the landmarks
     if data.y is not None:
         data.y = (data.y - data.norm_values[0]) / data.norm_values[1]
 
-    #position features!
+    # position features!
     data.pos = Scaler(data.pos)
 
-    #normals are already scaled how we want them
+    # normals are already scaled how we want them
     # data.x[:,:3] = data.x[:,:3]
 
-    #now for RGB features
-    data.x[:,3:] = Scaler(data.x[:,3:])
+    # now for RGB features
+    data.x[:, 3:] = Scaler(data.x[:, 3:])
     return data
+
 
 # def normalize_data(data):
 #     data.norm_values = torch.mean(torch.abs(data.pos), axis = 0)
@@ -180,6 +188,7 @@ def unnormalize_data(data):
             data.y = (data.y * data.norm_values[1]) + data.norm_values[0]
     return data
 
+
 # def unnormalize_data(data):
 #     if not hasattr(data.norm_values):
 #         raise ValueError('Norm value was not found! The data may not be currently normalized.')
@@ -189,14 +198,14 @@ def unnormalize_data(data):
 #             data.y = data.y * data.norm_values
 #     return data
 
-def convert_to_graph(image_vtp, landmarks, use_texture = True):
+def convert_to_graph(image_vtp, landmarks, use_texture=True):
     '''
         Function to convert a 3D photograph (VTP mesh) and its landmarks to a graph
         According to https://pytorch-geometric.readthedocs.io/en/latest/modules/data.html#torch_geometric.data.Data
         x = node features
         y = labels
         pos = node positions
-        edge_indices = COO format of graph 
+        edge_indices = COO format of graph
     '''
     y = landmarks
     pos = vtk_to_numpy(image_vtp.GetPoints().GetData())
@@ -205,21 +214,24 @@ def convert_to_graph(image_vtp, landmarks, use_texture = True):
     edge_indices = convert_to_coo(edge_table)
     node_weights = calc_node_weights(torch.tensor(pos))
     if use_texture:
-        #normalize the texture
-        texture = vtk_to_numpy(image_vtp.GetPointData().GetArray('Texture'))/255
-        x = torch.cat((torch.tensor(x), torch.tensor(texture)), dim = 1)
+        # normalize the texture
+        texture = vtk_to_numpy(image_vtp.GetPointData().GetArray('Texture')) / 255
+        x = torch.cat((torch.tensor(x), torch.tensor(texture)), dim=1)
     else:
         x = torch.tensor(x)
     if landmarks is not None:
-        data = Data(x = x, y = torch.tensor(y), pos = torch.tensor(pos), edge_index = torch.tensor(edge_indices, dtype = torch.long), node_weight = node_weights, num_nodes = len(pos))
+        data = Data(x=x, y=torch.tensor(y), pos=torch.tensor(pos),
+                    edge_index=torch.tensor(edge_indices, dtype=torch.long), node_weight=node_weights,
+                    num_nodes=len(pos))
     else:
-        data = Data(x = x, pos = torch.tensor(pos), edge_index = torch.tensor(edge_indices, dtype = torch.long), node_weight = node_weights, num_nodes = len(pos))
-
+        data = Data(x=x, pos=torch.tensor(pos), edge_index=torch.tensor(edge_indices, dtype=torch.long),
+                    node_weight=node_weights, num_nodes=len(pos))
 
     data = normalize_data(data)
-    #now adjust the batch
-    data.batch = torch.zeros(data.pos.shape[0], dtype = torch.int64)
+    # now adjust the batch
+    data.batch = torch.zeros(data.pos.shape[0], dtype=torch.int64)
     return data
+
 
 def calc_node_weights(pos):
     return torch.empty(pos.shape[0])
@@ -229,27 +241,28 @@ def calc_node_weights(pos):
     # normalized_dist = (average_dist - average_dist.min())/ (average_dist.max() - average_dist.min())
     # return torch.stack([normalized_dist,1-normalized_dist], dim = 1)
 
-def get_edges_of_mesh( mesh):
-    
+
+def get_edges_of_mesh(mesh):
     '''
     Construct an edge list using COO format
     '''
     edge_table = {}
     for point in range(mesh.GetNumberOfPoints()):
         # print(f'Extracting edges for point {point} out of {mesh.GetNumberOfPoints()}', end = '\r')
-        #for each cell
+        # for each cell
         cellidlist = vtk.vtkIdList()
         mesh.GetPointCells(point, cellidlist)
         points = []
         for cellid in range(cellidlist.GetNumberOfIds()):
-            #find the points for each cell
+            # find the points for each cell
             pointidlist = vtk.vtkIdList()
-            mesh.GetCellPoints(cellidlist.GetId(cellid), pointidlist) # get cell ids
-            #get the actual points belonging to the cells
+            mesh.GetCellPoints(cellidlist.GetId(cellid), pointidlist)  # get cell ids
+            # get the actual points belonging to the cells
             points += [pointidlist.GetId(x) for x in range(pointidlist.GetNumberOfIds())]
-        #only take each point once
+        # only take each point once
         edge_table[point] = list(np.unique(points))
     return edge_table
+
 
 def convert_to_coo(edge_table):
     # print('Converting format to coo...')
@@ -260,8 +273,9 @@ def convert_to_coo(edge_table):
         out_edges += val
     return np.array([in_edges, out_edges])
 
+
 def smooth_mesh(mesh):
-    #smooth the mesh!
+    # smooth the mesh!
     # Making sure there are only triangles
     filter = vtk.vtkTriangleFilter()
     filter.SetInputData(mesh)
@@ -286,12 +300,15 @@ def smooth_mesh(mesh):
     filter.Update()
     return filter.GetOutput()
 
+
 def interpolate_texture_to_points(mesh):
     textures = np.zeros([mesh.GetNumberOfPoints(), 3])
     celltextures = mesh.GetCellData().GetArray('Texture')
     for point in range(mesh.GetNumberOfPoints()):
-        #for each cell
+        # for each cell
         cellidlist = vtk.vtkIdList()
         mesh.GetPointCells(point, cellidlist)
-        textures[point, :] = np.mean(np.array([celltextures.GetTuple(cellidlist.GetId(cellid)) for cellid in range(cellidlist.GetNumberOfIds())]), axis = 0)/255
+        textures[point, :] = np.mean(np.array(
+            [celltextures.GetTuple(cellidlist.GetId(cellid)) for cellid in range(cellidlist.GetNumberOfIds())]),
+                                     axis=0) / 255
     return textures
