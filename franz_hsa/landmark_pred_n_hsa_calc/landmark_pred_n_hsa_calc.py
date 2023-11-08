@@ -258,13 +258,11 @@ if __name__ == '__main__':
 
     repo_root_path = Path(repo_root_str_path)
     hsa_exec_params_db_path = repo_root_path / r"franz_hsa/landmark_pred_n_hsa_calc/hsa_execution_parameters.xlsx"
+    dir_to_store_hsa_results = repo_root_path / 'franz_hsa/hsa_output'
 
     # Define your experiment index and where to store the exported data
-    experiment_index = 13
+    experiment_index = 14
     hsa_execution_parameters = load_hsa_exec_parameters(params_db_path=hsa_exec_params_db_path,
                                                         hsa_exp_index=experiment_index)
-    dir_to_store_hsa_results = Path(r"C:\Users\franz\Documents\work\projects\arp\quantification-methods\tareq\kde_classifier\KDE_shape_classifier\experiment_data\raw_data\hsa_output")
-
     # Execute the HSA model
     execute_hsa_by_params(hsa_execution_parameters, experiment_index)
-

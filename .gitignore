@@ -16,3 +16,9 @@
 __pycache__/__init__.cpython-39.pyc
 __pycache__/Analyze3DPhotogram.cpython-39.pyc
 franz_hsa/landmark_prediction_evaluation/__pycache__/export_landmarks.cpython-39.pyc
+/CraniosynostosisClassifier/
+/data/
+/NormativePCAModel/
+tools/__pycache__/PhotoAnalysisTools.cpython-39.pyc
+tools/__pycache__/LandmarkingUtils.cpython-39.pyc
+tools/__pycache__/DataSetGraph.cpython-39.pyc
