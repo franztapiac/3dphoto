@@ -202,10 +202,10 @@ if __name__ == '__main__':
         texture_model_path = Path('./texture_model_13151_pts.h5')
 
         untextured_ply_format_files_path = \
-            Path(r"C:\Users\franz\Documents\work\projects\arp\data\synthetic_data\synthetic_data_original_untextured_unclipped_ply")
+            Path(r"C:\Users\franz\Documents\work\projects\arp\data\synthetic_data\synthetic_data_original_untextured_unclipped_ply_expanded_to_pat_sag_1716156_pre")
 
         textured_files_path = \
-            Path(r"C:\Users\franz\Documents\work\projects\arp\data\synthetic_data\synthetic_data_original_textured_unclipped_vtp_paraview")
+            Path(r"C:\Users\franz\Documents\work\projects\arp\data\synthetic_data\synthetic_data_original_textured_unclipped_vtp_expanded_to_pat_sag_1716156_pre")
 
         generate_textured_files(tex_model_path=texture_model_path, untex_ply_files_path=untextured_ply_format_files_path,
                                 tex_files_path=textured_files_path)
