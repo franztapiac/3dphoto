@@ -383,7 +383,6 @@ def ComputeVolume(image, projected = False):
         vol = mass.GetVolume() / 1e3
     return vol
 
-
 def WrapSphere(inputMesh):
     # Warping a sphere to the outer surface
     center = np.zeros([3], dtype=np.float64)
