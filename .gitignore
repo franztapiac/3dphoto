@@ -19,9 +19,6 @@ franz_hsa/landmark_prediction_evaluation/__pycache__/export_landmarks.cpython-39
 tools/__pycache__/PhotoAnalysisTools.cpython-39.pyc
 tools/__pycache__/LandmarkingUtils.cpython-39.pyc
 tools/__pycache__/DataSetGraph.cpython-39.pyc
-/NormativePCAModel/
-/CraniosynostosisClassifier/
-/data/
 /franz_hsa/hsa_v1/CraniosynostosisClassifier/
 /franz_hsa/hsa_v1/data/
 /franz_hsa/hsa_v1/NormativePCAModel/
