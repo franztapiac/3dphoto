@@ -61,7 +61,7 @@ def define_hsa_score_storage_path(hsa_execution_params, exp_index):
             texture_state = 'textured'
         else:
             texture_state = 'untextured'
-        hsa_scores_file_path = dir_to_store_hsa_results / f'{time_stamp}_hsa_v{hsa_model}_indices_exp_{exp_index}_' \
+        hsa_scores_file_path = dir_to_store_hsa_results / f'{time_stamp}_hsa_v{int(hsa_model)}_indices_exp_{exp_index}_' \
                                                           f'{data_type}_data_{sub_data_type}_{texture_state}_' \
                                                           f'{num_landmarks}_{landmark_placement}_landmarks.xlsx'
     else:  # data_type = 'patient'
