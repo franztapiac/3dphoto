@@ -1,3 +1,4 @@
+print('Entering LandmarkingUtils v2')
 import torch
 import SimpleITK as sitk
 from vtkmodules.util import numpy_support

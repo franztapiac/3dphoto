@@ -1,7 +1,8 @@
+print('Entering Analyze3DPhotogram v1')
 import argparse
-from tools.DataSetGraph import ReadPolyData, WritePolyData, LoadOBJFile
-from tools.LandmarkingUtils import RunInference
-from tools.PhotoAnalysisTools import AlignPatientToTemplate, GenerateSphericalMapOfData, ComputeFromSphericalImage
+from franz_hsa.hsa_v1.tools.DataSetGraph import ReadPolyData, WritePolyData, LoadOBJFile
+from franz_hsa.hsa_v1.tools.LandmarkingUtils import RunInference
+from franz_hsa.hsa_v1.tools.PhotoAnalysisTools import AlignPatientToTemplate, GenerateSphericalMapOfData, ComputeFromSphericalImage
 from franz_hsa.landmark_evaluation.export_landmarks import export_landmarks
 from os import path
 from pathlib import Path

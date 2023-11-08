@@ -1,7 +1,8 @@
-from __init__ import CLASSIFIER_DIR, MODEL_DIR, EURYON_CRANIALBASE_LANDMARKS_PATH, REDUCED_CRANIALBASE_LANDMARKS_PATH, GLABELLA_CRANIALBASE_LANDMARKS_PATH
+print('Entering PhotoAnalysisTools v1')
+from franz_hsa.hsa_v1.__init__ import CLASSIFIER_DIR, MODEL_DIR, EURYON_CRANIALBASE_LANDMARKS_PATH, REDUCED_CRANIALBASE_LANDMARKS_PATH, GLABELLA_CRANIALBASE_LANDMARKS_PATH
 import pandas as pd
-from tools.LandmarkingUtils import CutMeshWithCranialBaseLandmarks, vtkPolyDataToNumpy
-import tools.DataSetGraph as DataSet
+from franz_hsa.hsa_v1.tools.LandmarkingUtils import CutMeshWithCranialBaseLandmarks, vtkPolyDataToNumpy
+import franz_hsa.hsa_v1.tools.DataSetGraph as DataSet
 import vtk
 from vtkmodules.util import numpy_support
 import SimpleITK as sitk
@@ -301,7 +302,7 @@ def CreateMeshFromBinaryImage(binaryImage, insidePixelValue=1):
     return mesh
 
 def AlignPatientToTemplate(surface, landmarks):
-
+    print('Within Align v1')
     l = vtk.vtkPolyData()
     l.DeepCopy(landmarks)
     landmarks = l
@@ -612,6 +613,7 @@ def GenerateSphericalMapOfData(externalSurface, subjectToTemplateTransform):
     Function to generate the spherical map of a surface mesh
     Will cut the mesh at the template space landmarks (tragion)
     '''
+    print('Within Generate v1')
     l = vtk.vtkPolyData()
     l.DeepCopy(externalSurface)
     externalSurface = l
@@ -711,6 +713,7 @@ def ComputeResults(data, pca_model, num_comps = 35):
     return 100*clf.predict_proba(features_transformed)[0][1], statisticalDistance
 
 def ComputeFromSphericalImage(coordsImage, age, sex, remove_scale = True):
+    print('Within Compute v1')
     atlasPath = os.path.join(MODEL_DIR, 'PCAModel')
     with shelve.open(atlasPath, 'r') as atlasInformation:
         indices = atlasInformation['indices']

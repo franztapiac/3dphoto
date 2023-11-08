@@ -1,3 +1,4 @@
+print('Entering Analyze3DPhotogram v2')
 from tools.DataSetGraph import ReadPolyData, WritePolyData, LoadOBJFile
 import pdb
 from os import path
@@ -34,6 +35,7 @@ def ComputeHSAandRiskScore(image, landmarks, age, sex, verbose = True):
         age: age of patient in days
         sex: 0 for female, 1 for male
     '''
+    print('Within ComputeHSA v2')
     #now, compute the HSA index and risk score!
     if verbose:
         print('Aligning image to template...')

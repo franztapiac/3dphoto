@@ -1,11 +1,12 @@
+print('Entering LandmarkingUtils v1')
 import torch
 import SimpleITK as sitk
 from vtkmodules.util import numpy_support
 import numpy as np
 import pdb
-import tools.DataSetGraph as DataSet
+import franz_hsa.hsa_v1.tools.DataSetGraph as DataSet
 import vtk
-from __init__ import CRANIOFACIAL_LANDMARKING_MODEL_PATH, CRANIOFACIAL_LANDMARKING_NOTEXTURE_MODEL_PATH
+from franz_hsa.hsa_v1.__init__ import CRANIOFACIAL_LANDMARKING_MODEL_PATH, CRANIOFACIAL_LANDMARKING_NOTEXTURE_MODEL_PATH
 
 def ConvertToVTP(data, landmarks):
     #unnormalize the result

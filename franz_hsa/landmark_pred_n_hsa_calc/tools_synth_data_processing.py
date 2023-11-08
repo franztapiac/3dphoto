@@ -1,8 +1,47 @@
 import json
 import numpy as np
 import re
-from tools.LandmarkingUtils import AddArraysToLandmarks
 import vtk
+
+
+def default_landmark_names():
+    return ["TRAGION_RIGHT", "SELLION", "TRAGION_LEFT", "EURYON_RIGHT", "EURYON_LEFT", "FRONTOTEMPORALE_RIGHT",
+            "FRONTOTEMPORALE_LEFT", "VERTEX", "NASION", "GLABELLA", "OPISTHOCRANION", "GNATHION", "STOMION",
+            "ZYGION_RIGHT", "ZYGION_LEFT", "GONION_RIGHT", "GONION_LEFT", "SUBNASALE", "ENDOCANTHION_RIGHT",
+            "ENDOCANTHION_LEFT", "EXOCANTHION_RIGHT", "EXOCANTHION_LEFT", "ALAR_RIGHT", "ALAR_LEFT", "NASALE_TIP",
+            "SUBLABIALE", "UPPER_LIP"]
+
+
+def add_arrays_to_landmarks(landmarks, landmark_names=None):
+    defaultColors = [
+        [255, 0, 0],  # r
+        [0, 255, 0],  # g
+        [0, 0, 255],  # b
+        [255, 0, 255],  # m
+        [0, 255, 255],  # c
+        [255, 255, 0]  # y
+    ]
+
+    num_landmarks = landmarks.GetNumberOfPoints()
+    colorArray = vtk.vtkFloatArray()
+    colorArray.SetName('Color')
+    colorArray.SetNumberOfComponents(3)
+    for x in range(num_landmarks):
+        color = defaultColors[x % len(defaultColors)]
+        colorArray.InsertNextTuple3(color[0], color[1], color[2])
+    landmarks.GetPointData().AddArray(colorArray)
+
+    nameArray = vtk.vtkStringArray()
+    nameArray.SetName("LandmarkName")
+    if landmark_names is None:
+        landmark_names = default_landmark_names()
+    if len(landmark_names) != num_landmarks:
+        print('More landmarks in data than names specified. Leaving names blank for now...')
+        landmark_names = [f'Landmark{x}' for x in range(num_landmarks)]
+    for name in landmark_names:
+        nameArray.InsertNextValue(name)
+    landmarks.GetPointData().AddArray(nameArray)
+    return landmarks
 
 
 def get_mesh_info(mesh_vtp_file_path, file_ending):
@@ -42,7 +81,7 @@ def place_landmarks_manually(mesh_vtp, landmark_coordinates=None):
         manual_landmarks.GetPoints().InsertNextPoint(*p_coords)
 
     landmark_names = list(landmark_coordinates.keys())  # must be defined in the right relative order
-    landmarks_vtp = AddArraysToLandmarks(manual_landmarks, landmark_names)
+    landmarks_vtp = add_arrays_to_landmarks(manual_landmarks, landmark_names)
 
     return landmarks_vtp
 

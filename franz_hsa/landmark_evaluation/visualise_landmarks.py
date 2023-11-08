@@ -7,13 +7,13 @@ sys.path.append(repo_root_str_path)
 import json
 import numpy as np
 from numpy import random
-import pandas as pd
 from pathlib import Path
 import pyvista as pv
 import re
 from Analyze3DPhotogram import ReadImage
 from franz_hsa.landmark_pred_n_hsa_calc.tools_synth_data_processing import place_landmarks_manually
 from franz_hsa.landmark_evaluation.export_landmarks import export_landmarks
+from franz_hsa.utils.utils_landmarks import load_landmark_points
 from vtkmodules.util import numpy_support
 
 
@@ -124,26 +124,6 @@ def get_mesh_ids_per_subtype(json_file_path):
         mesh_ids_per_subtype[subtype].append(mesh_id_num)
 
     return mesh_ids_per_subtype
-
-
-def load_landmark_points(landmarks_points_path):
-    """
-    Load the .xlsx file with the manually defined landmark points into a dictionary.
-    :return: landmark_points; dict; format {'landmark name': point ID}
-    """
-    # Convert Excel into dict
-    landmarks_df = pd.read_excel(landmarks_points_path)
-    landmark_points = landmarks_df.set_index('landmark_name').to_dict()['point_id']
-
-    # Remove missing landmarks
-    landmarks_to_remove = []
-    for landmark in landmark_points.keys():
-        if np.isnan(landmark_points[landmark]):
-            landmarks_to_remove.append(landmark)
-    for landmark in landmarks_to_remove:
-        del landmark_points[landmark]
-
-    return landmark_points
 
 
 def get_landmark_coordinates(mesh, landmarks_points_path):

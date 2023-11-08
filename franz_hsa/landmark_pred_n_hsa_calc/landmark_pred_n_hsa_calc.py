@@ -6,13 +6,12 @@ repo_root_str_path = Repo(current_file_str_path, search_parent_directories=True)
 sys.path.append(repo_root_str_path)
 import datetime
 from franz_hsa.landmark_evaluation.export_landmarks import export_landmarks
-from franz_hsa.landmark_evaluation.visualise_landmarks import load_landmark_points
+from franz_hsa.utils.utils_landmarks import load_landmark_points
 from numpy import isnan
 import pandas as pd
 from pathlib import Path
 import random
 import time
-from tools.DataSetGraph import ReadPolyData, WritePolyData
 from tools_synth_data_processing import get_landmark_coords, get_mesh_info, place_landmarks_manually
 from tools_patient_data_processing import get_patient_age_and_sex
 random.seed(0)
@@ -269,10 +268,14 @@ if __name__ == '__main__':
     experiment_index = 13
     hsa_execution_parameters = load_hsa_exec_parameters(params_db_path=hsa_exec_params_db_path,
                                                         hsa_exp_index=experiment_index)
-    if hsa_execution_parameters['hsa_model'] == 1:
+    hsa_model = hsa_execution_parameters['hsa_model']
+    print(f'Using HSA model v{hsa_model}.')
+    if hsa_model == 1:
         from franz_hsa.hsa_v1.Analyze3DPhotogram import PlaceLandmarks, ComputeHSAandRiskScore, ReadImage
+        from franz_hsa.hsa_v1.tools.DataSetGraph import ReadPolyData, WritePolyData
     else:  # 2
         from Analyze3DPhotogram import PlaceLandmarks, ComputeHSAandRiskScore, ReadImage
+        from tools.DataSetGraph import ReadPolyData, WritePolyData
 
     # Execute the HSA model
     execute_hsa_by_params(hsa_execution_parameters, experiment_index)

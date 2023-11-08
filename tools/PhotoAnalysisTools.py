@@ -1,3 +1,4 @@
+print('Entering PhotoAnalysis v2')
 from __init__ import *
 import pandas as pd
 from tools.LandmarkingUtils import CutMeshWithCranialBaseLandmarks, vtkPolyDataToNumpy, SelectLandmarks, ComputeVolume
@@ -667,6 +668,7 @@ def CreateMeshFromBinaryImage(binaryImage, insidePixelValue=1):
 
 
 def AlignPatientToTemplate(surface, landmarks):
+    print('Within Align v2')
     l = vtk.vtkPolyData()
     l.DeepCopy(landmarks)
     landmarks = l
@@ -1025,6 +1027,7 @@ def GenerateSphericalMapOfData(externalSurface, subjectToTemplateTransform):
     Function to generate the spherical map of a surface mesh
     Will cut the mesh at the template space landmarks (tragion)
     '''
+    print('Within Generate v2')
     l = vtk.vtkPolyData()
     l.DeepCopy(externalSurface)
     externalSurface = l
@@ -1130,6 +1133,7 @@ def Arcsinh(age, sex, a, b, c, d, e, g):
 
 
 def ComputeFromSphericalImage(coordsImage, age, sex, remove_scale=False):
+    print('Within Compute v2')
     atlasPath = os.path.join(MODEL_DIR, 'PCAModel')
     with shelve.open(atlasPath, 'r') as atlasInformation:
         indices = atlasInformation['indices']

@@ -1,9 +1,22 @@
 import os
 from pathlib import Path
 import pyvista as pv
+from vtk import vtkPolyDataWriter, vtkXMLPolyDataWriter
 from vtkmodules.util import numpy_support
 from datetime import datetime
-from tools.DataSetGraph import WritePolyData
+
+
+def write_poly_data(data, filename):
+    if filename.endswith('.vtk'):
+        writer = vtkPolyDataWriter()
+    else:
+        writer = vtkXMLPolyDataWriter()
+    # Saving landmarks
+    writer = vtkXMLPolyDataWriter()
+    writer.SetFileName(filename)
+    writer.SetInputData(data)
+    writer.Update()
+    return
 
 
 def get_landmark_coordinates(landmarks_vtp):
@@ -45,4 +58,4 @@ def export_landmarks(landmarks, mesh_file_path: Path, landmark_placement, croppi
     landmark_coordinates_ply.save(str(landmark_ply_path))
 
     vtp_path = landmark_ply_path.parent / (landmark_ply_path.stem + '.vtp')
-    WritePolyData(landmarks, str(vtp_path))
+    write_poly_data(landmarks, str(vtp_path))
