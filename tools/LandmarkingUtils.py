@@ -446,7 +446,7 @@ def CropSurface(surface, percentage=.4):
 
 
 def RunInference(surface, crop=True, return_cropped_image=False, crop_percentage=0.4):
-    # crop if needed 
+    # crop if needed
     if crop:
         if crop_percentage >= 1:
             raise ValueError('Cropping percentage is >= 1. Please lower cropping percentage to < 1.')
