@@ -47,16 +47,17 @@ def export_to_excel(hsa_indices, output_path, hsa_exec_params):
     print(f'Exported data to {str(output_path.absolute())}.')
 
 
-def define_hsa_score_storage_path(hsa_execution_params, exp_index):
+def define_hsa_score_storage_path(hsa_execution_params):
 
-    time_stamp = datetime.datetime.now().strftime("%m%d;%H%M")
+    time_stamp = datetime.datetime.now().strftime("%Y-%m-%d;%H%M")
     hsa_model = hsa_execution_params['hsa_model']
     data_type = hsa_execution_params['data_type']
     sub_data_type = hsa_execution_params['sub_data_type']
     landmark_placement = hsa_execution_params['landmark_placement']
     num_landmarks = hsa_execution_params['num_landmarks']
+    exp_index = hsa_execution_params['exp_index']
 
-    if data_type == 'synthetic':  # TODO have hsa_exp_index come from hsa_ex params, not the global var
+    if data_type == 'synthetic':  
         if hsa_execution_params['with_texture']:
             texture_state = 'textured'
         else:
@@ -227,10 +228,10 @@ def place_landmarks_n_measure_hsa_on_patient_data(mesh_file_paths, hsa_exec_para
     return hsa_and_times
 
 
-def execute_hsa_by_params(hsa_exp_params, exp_index):
+def execute_hsa_by_params(hsa_exp_params):
 
     # Load data and execute HSA
-    data_path = Path(hsa_exp_params['exp_data_path'])
+    data_path = hsa_exp_params['exp_data_path']
     if hsa_exp_params['data_type'] == 'synthetic':
         hsa_scores_n_times = place_landmarks_n_measure_hsa_on_synth_data(data_path=data_path,
                                                                                 hsa_exec_params=hsa_exp_params)
@@ -242,7 +243,7 @@ def execute_hsa_by_params(hsa_exp_params, exp_index):
 
     # Store HSA output
     if hsa_exp_params['calculate_hsa']:
-        hsa_score_storage_path = define_hsa_score_storage_path(hsa_exp_params, exp_index)
+        hsa_score_storage_path = define_hsa_score_storage_path(hsa_exp_params)
         export_to_excel(hsa_indices=hsa_scores_n_times, output_path=hsa_score_storage_path,
                         hsa_exec_params=hsa_exp_params)
 
@@ -255,10 +256,13 @@ def load_hsa_exec_parameters(params_db_path, hsa_exp_index):
     if isnan(hsa_exec_params['hsa_model']):
         raise Exception('You must enter an hsa_model in hsa_execution_parameters: '
                         'either 1 (before metopic update) or 2 (for metopic update).')
+    
+    hsa_exec_params['exp_data_path'] = Path(hsa_exec_params['exp_data_path'])
+    hsa_exec_params['exp_index'] = hsa_exp_index
 
     if ',' in hsa_exec_params['included_subtypes']:
-        hsa_exec_params['included_subtypes'] = hsa_exec_params['included_subtypes'].split(', ')  # TODO space hardcoded, be more flexible
-
+        hsa_exec_params['included_subtypes'] = [s.strip() for s in hsa_exec_params['included_subtypes'].split(',')]  
+    
     return hsa_exec_params
 
 
@@ -267,6 +271,9 @@ if __name__ == '__main__':
     repo_root_path = Path(repo_root_str_path)
     hsa_exec_params_db_path = repo_root_path / r"franz_hsa/landmark_pred_n_hsa_calc/hsa_execution_parameters.xlsx"
     dir_to_store_hsa_results = repo_root_path / 'franz_hsa/hsa_output'
+
+    if not os.path.isdir(dir_to_store_hsa_results):
+        os.makedirs(dir_to_store_hsa_results)
 
     # Define your experiment index and where to store the exported data
     experiment_index = 13
@@ -282,4 +289,4 @@ if __name__ == '__main__':
         from tools.DataSetGraph import ReadPolyData, WritePolyData
 
     # Execute the HSA model
-    execute_hsa_by_params(hsa_execution_parameters, experiment_index)
+    execute_hsa_by_params(hsa_execution_parameters)
