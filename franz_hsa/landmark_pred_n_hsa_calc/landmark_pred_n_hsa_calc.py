@@ -75,9 +75,13 @@ def define_hsa_score_storage_path(hsa_execution_params, exp_index):
 def place_landmarks_n_measure_hsa_on_synth_data(data_path, hsa_exec_params):
     """
     This function computes the HSA indices for the synthetic data in the vtp path given the HSA execution parameters.
-    :param data_path: a Path object to a directory with subtype subdirectories, each of which contains .vtp meshes.
-    :param hsa_exec_params: a dictionary with execution parameters.
-    :return: a dictionary of HSA indices for each mesh of the subtypes in the .vtp data path.
+
+    Args:
+        data_path (Path): Directory with subtype subdirectories, each of which contains .vtp meshes.
+        hsa_exec_params (dict): HSA execution parameters.
+    
+    Returns:
+        dict: HSA indices for each mesh of the subtypes in the .vtp data path.
     """
 
     hsa_and_times = dict()  # patient: {'sagittal, pre, post': {patient ID: HSA, CS risk, time}
@@ -253,7 +257,7 @@ def load_hsa_exec_parameters(params_db_path, hsa_exp_index):
                         'either 1 (before metopic update) or 2 (for metopic update).')
 
     if ',' in hsa_exec_params['included_subtypes']:
-        hsa_exec_params['included_subtypes'] = hsa_exec_params['included_subtypes'].split(', ')
+        hsa_exec_params['included_subtypes'] = hsa_exec_params['included_subtypes'].split(', ')  # TODO space hardcoded, be more flexible
 
     return hsa_exec_params
 
