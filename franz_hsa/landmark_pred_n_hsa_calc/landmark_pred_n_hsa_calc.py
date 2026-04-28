@@ -4,18 +4,42 @@ import sys
 current_file_str_path = os.path.abspath(__file__)
 repo_root_str_path = Repo(current_file_str_path, search_parent_directories=True).git.rev_parse("--show-toplevel")
 sys.path.append(repo_root_str_path)
+
 import datetime
-from franz_hsa.landmark_evaluation.export_landmarks import export_landmarks
-from franz_hsa.utils.utils_landmarks import load_landmark_points
 from numpy import isnan
 import pandas as pd
 from pathlib import Path
 import random
 import time
+
+from franz_hsa.landmark_evaluation.export_landmarks import export_landmarks
+from franz_hsa.utils.utils_landmarks import load_landmark_points
 from tools_synth_data_processing import get_landmark_coords, get_mesh_info, place_landmarks_manually
 from tools_patient_data_processing import get_patient_age_and_sex
+
 random.seed(0)
 
+def get_hsa_dependencies(hsa_version):
+
+    """
+    Loads and returns the correct module dependencies based on the HSA version.
+    """
+    if hsa_version == 1:
+        from franz_hsa.hsa_v1.Analyze3DPhotogram import PlaceLandmarks, ComputeHSAandRiskScore, ReadImage
+        from franz_hsa.hsa_v1.tools.DataSetGraph import ReadPolyData, WritePolyData
+    elif hsa_version == 2:
+        from Analyze3DPhotogram import PlaceLandmarks, ComputeHSAandRiskScore, ReadImage
+        from tools.DataSetGraph import ReadPolyData, WritePolyData
+    else:
+        raise ValueError(f'Unsupported HSA model version: {hsa_version}')
+        
+    return {
+        "PlaceLandmarks": PlaceLandmarks,
+        "ComputeHSAandRiskScore": ComputeHSAandRiskScore,
+        "ReadImage": ReadImage,
+        "ReadPolyData": ReadPolyData,
+        "WritePolyData": WritePolyData
+    }
 
 def export_to_excel(hsa_indices, output_path, hsa_exec_params):
     # hsa index file should storage execution parameters, as well as subtype names
@@ -56,6 +80,7 @@ def define_hsa_score_storage_path(hsa_execution_params):
     landmark_placement = hsa_execution_params['landmark_placement']
     num_landmarks = hsa_execution_params['num_landmarks']
     exp_index = hsa_execution_params['exp_index']
+    dir_to_store_hsa_results = hsa_execution_params['dir_to_store_hsa_results']
 
     if data_type == 'synthetic':  
         if hsa_execution_params['with_texture']:
@@ -73,17 +98,22 @@ def define_hsa_score_storage_path(hsa_execution_params):
     return hsa_scores_file_path
 
 
-def place_landmarks_n_measure_hsa_on_synth_data(data_path, hsa_exec_params):
+def place_landmarks_n_measure_hsa_on_synth_data(data_path, hsa_exec_params, hsa_tools):
     """
     This function computes the HSA indices for the synthetic data in the vtp path given the HSA execution parameters.
 
     Args:
         data_path (Path): Directory with subtype subdirectories, each of which contains .vtp meshes.
         hsa_exec_params (dict): HSA execution parameters.
-    
+        hsa_tools (dict): HSA module dependencies.
+
     Returns:
         dict: HSA indices for each mesh of the subtypes in the .vtp data path.
     """
+
+    ReadPolyData = hsa_tools['ReadPolyData']
+    PlaceLandmarks = hsa_tools['PlaceLandmarks']
+    ComputeHSAandRiskScore = hsa_tools['ComputeHSAandRiskScore']
 
     hsa_and_times = dict()  # patient: {'sagittal, pre, post': {patient ID: HSA, CS risk, time}
 
@@ -167,7 +197,12 @@ def load_patient_mesh_file_paths(data_path, file_ending):
     return meshes_file_paths, subtype
 
 
-def place_landmarks_n_measure_hsa_on_patient_data(mesh_file_paths, hsa_exec_params):
+def place_landmarks_n_measure_hsa_on_patient_data(mesh_file_paths, hsa_exec_params, hsa_tools):
+
+    ReadImage = hsa_tools['ReadImage']
+    WritePolyData = hsa_tools['WritePolyData']
+    PlaceLandmarks = hsa_tools['PlaceLandmarks']
+    ComputeHSAandRiskScore = hsa_tools['ComputeHSAandRiskScore']
 
     print('\n// Placing landmarks and calculating HSA indices //')
 
@@ -228,18 +263,16 @@ def place_landmarks_n_measure_hsa_on_patient_data(mesh_file_paths, hsa_exec_para
     return hsa_and_times
 
 
-def execute_hsa_by_params(hsa_exp_params):
+def execute_hsa_by_params(hsa_exp_params, hsa_tools):
 
     # Load data and execute HSA
     data_path = hsa_exp_params['exp_data_path']
     if hsa_exp_params['data_type'] == 'synthetic':
-        hsa_scores_n_times = place_landmarks_n_measure_hsa_on_synth_data(data_path=data_path,
-                                                                                hsa_exec_params=hsa_exp_params)
+        hsa_scores_n_times = place_landmarks_n_measure_hsa_on_synth_data(data_path=data_path, hsa_exec_params=hsa_exp_params, hsa_tools=hsa_tools)
     else:  # 'patient' data
         mesh_files_paths, dataset = load_patient_mesh_file_paths(data_path=data_path,
                                                                  file_ending=hsa_exp_params['file_ending'])
-        hsa_scores_n_times = place_landmarks_n_measure_hsa_on_patient_data(mesh_file_paths=mesh_files_paths,
-                                                                           hsa_exec_params=hsa_exp_params)
+        hsa_scores_n_times = place_landmarks_n_measure_hsa_on_patient_data(mesh_file_paths=mesh_files_paths, hsa_exec_params=hsa_exp_params, hsa_tools=hsa_tools)
 
     # Store HSA output
     if hsa_exp_params['calculate_hsa']:
@@ -252,16 +285,12 @@ def load_hsa_exec_parameters(params_db_path, hsa_exp_index):
 
     hsa_exec_params_db = pd.read_excel(params_db_path, index_col=0)  # index_col = 0 s.t. hsa_exp_index = df index
     hsa_exec_params = hsa_exec_params_db.loc[hsa_exp_index].to_dict()
-
-    if isnan(hsa_exec_params['hsa_model']):
-        raise Exception('You must enter an hsa_model in hsa_execution_parameters: '
-                        'either 1 (before metopic update) or 2 (for metopic update).')
     
     hsa_exec_params['exp_data_path'] = Path(hsa_exec_params['exp_data_path'])
     hsa_exec_params['exp_index'] = hsa_exp_index
 
     if ',' in hsa_exec_params['included_subtypes']:
-        hsa_exec_params['included_subtypes'] = [s.strip() for s in hsa_exec_params['included_subtypes'].split(',')]  
+        hsa_exec_params['included_subtypes'] = [s.strip() for s in hsa_exec_params['included_subtypes'].split(',')]  # TODO check concern about one subtype and lack of commas  
     
     return hsa_exec_params
 
@@ -272,21 +301,17 @@ if __name__ == '__main__':
     hsa_exec_params_db_path = repo_root_path / r"franz_hsa/landmark_pred_n_hsa_calc/hsa_execution_parameters.xlsx"
     dir_to_store_hsa_results = repo_root_path / 'franz_hsa/hsa_output'
 
-    if not os.path.isdir(dir_to_store_hsa_results):
-        os.makedirs(dir_to_store_hsa_results)
+    dir_to_store_hsa_results.mkdir(parents=True, exist_ok=True)
 
     # Define your experiment index and where to store the exported data
     experiment_index = 13
     hsa_execution_parameters = load_hsa_exec_parameters(params_db_path=hsa_exec_params_db_path,
                                                         hsa_exp_index=experiment_index)
-    hsa_model = hsa_execution_parameters['hsa_model']
-    print(f'Using HSA model v{hsa_model}.')
-    if hsa_model == 1:
-        from franz_hsa.hsa_v1.Analyze3DPhotogram import PlaceLandmarks, ComputeHSAandRiskScore, ReadImage
-        from franz_hsa.hsa_v1.tools.DataSetGraph import ReadPolyData, WritePolyData
-    else:  # 2
-        from Analyze3DPhotogram import PlaceLandmarks, ComputeHSAandRiskScore, ReadImage
-        from tools.DataSetGraph import ReadPolyData, WritePolyData
+    hsa_execution_parameters['dir_to_store_hsa_results'] = dir_to_store_hsa_results
+    hsa_model_version = hsa_execution_parameters['hsa_model']
+    print(f'Using HSA model v{hsa_model_version}.')
+
+    hsa_tools = get_hsa_dependencies(hsa_model_version)
 
     # Execute the HSA model
-    execute_hsa_by_params(hsa_execution_parameters)
+    execute_hsa_by_params(hsa_execution_parameters, hsa_tools)
