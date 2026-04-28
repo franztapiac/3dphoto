@@ -4,7 +4,7 @@ Franz A. Tapia Chaca
 franz.tapia-chaca@outlook.com
 
 ## <u>Content</u>
-Franz's work with the HSA index spanned 4 categories:
+Franz's work with the HSA index spanned five categories (#1-5):
 0. Cloning HSA repository (HSA v1 or HSA v2) into your computer or a server.
 1. Appending RGB texture to synthetic meshes
 2. Expanding meshes
@@ -15,13 +15,11 @@ Franz's work with the HSA index spanned 4 categories:
 Each category has its own subdirectory, and how the corresponding scripts work is 
 explained below.
 
-## <u>0) Cloning HSA repository (HSA v1 or HSA v2) into your computer or server</u>
+## <u>0) Cloning this HSA repository (HSA v1 or HSA v2) into your computer or server</u>
 
-Clone from franz's fork
-
-Move the HSA v2 files into the parent repository directory
-
-Move the HSA v1 files into parent/franz_hsa/hsa_v1.
+After cloning from this fork, if you want to execute the HSA calculation script for both models, you need to do the following first:
+1. Move the HSA v2 models into the directory of the parent repository, e.g. 3dphoto/.
+2. Move the HSA v1 models into the directory of hsav1, i.e. parent/franz_hsa/hsa_v1.
 
 You can now run either HSA model, selecting "1" for HSA v1 and "2" for HSA v2 
 in``hsa_execution_parameters.xlsx``.
@@ -151,12 +149,14 @@ landmark prediction model.
 
 ### 1. ``landmark_pred_n_hsa_calc.py``
 
-This is the central script for landmark prediction and HSA index calculation
-for either synthetic or patient data. Functions for processing either type of 
+This script executes the landmark prediction and HSA index calculation for synthetic
+or patient data. Functions for processing either type of 
 data is imported from ``tools_synth_data_processing.py`` or 
-``tools_patient_data_processing.py``. The parameters for hsa calculation are
-defined in ``hsa_execution_parameters.xlsx``.
+``tools_patient_data_processing.py``. Before executing this script, first define your 
+parameters for HSA index calculation within ``hsa_execution_parameters.xlsx``.
 
+To execute this script, edit the the value of `experiment_index` to the desired 
+experiment index and run the file.
 
 ### 2. ``hsa_calculator_patient_pre_n_post_op.py``
 
