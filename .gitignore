@@ -37,3 +37,4 @@ franz_hsa/hsa_v1/tools/__pycache__/PhotoAnalysisTools.cpython-39.pyc
 franz_hsa/utils/__pycache__/utils_landmarks.cpython-39.pyc
 .vscode/launch.json
 .vscode/settings.json
+/franz_hsa/hsa_output/
